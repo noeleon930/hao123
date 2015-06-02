@@ -12,21 +12,14 @@ if __name__ == '__main__':
 	f = open('log_train.csv', 'r') 
 	csv_f = csv.reader(f)
 	csv_f = list(csv_f)
-	#print(csv_f[0])
 	user_id = []
 
 	for row in csv_f:
-		#print row
 		user_id.append(row[0])
 
 	user_id = list(set(user_id))
-	#print(user_id)
-	#print user_id
 	access = [[int(a),0,0,0,0,0,0,0] for a in user_id]
-	#print access
 	IndexofUser = 0
-	#fout = open('access.csv', 'w' )
-	#fout.write('userid,AccessTime')
 	for row in csv_f:
 		IndexofUser = user_id.index(row[0])
 		if(row[3]=='problem'):
