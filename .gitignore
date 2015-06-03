@@ -209,11 +209,14 @@ pip-log.txt
 .coverage
 .tox
 
-#Translations
+# Translations
 *.mo
 
-#Mr Developer
+# Mr Developer
 .mr.developer.cfg
 
-#hao123 data
+# hao123 data
 data_kdd/
+
+# NetBeans
+/noeleon930/GenerateFeatureJava/nbproject/private/
