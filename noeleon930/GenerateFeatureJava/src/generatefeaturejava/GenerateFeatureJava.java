@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -129,8 +130,9 @@ public class GenerateFeatureJava
         timeGone = Duration.between(startTime, endTime);
         p((timeGone.toMillis() / 1000) + " sec in fetching each enrollment's features.");
 
-        // Ouput to json
+        // Output to json (one is prettified and one is minified)
         p("Start writing to json.");
+
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String json = gson.toJson(enrollment_feature_list);
         try (Writer writer = new OutputStreamWriter(new FileOutputStream("enrollment_feature.json"), "UTF-8"))
@@ -139,7 +141,28 @@ public class GenerateFeatureJava
             writer.flush();
             writer.close();
         }
+
+        Gson gson_min = new Gson();
+        String json_min = gson_min.toJson(enrollment_feature_list);
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream("enrollment_feature.min.json"), "UTF-8"))
+        {
+            writer.write(json_min);
+            writer.flush();
+            writer.close();
+        }
+
         p("Finish writing to json.");
+
+        // Serialize enrollment_feature_list!
+        FileOutputStream objFileOut;
+        ObjectOutputStream objOut;
+
+        objFileOut = new FileOutputStream("enrollment_feature_list.obj");
+        objOut = new ObjectOutputStream(objFileOut);
+
+        objOut.writeObject(enrollment_feature_list);
+        objOut.close();
+        objFileOut.close();
     }
 
     // Print things to the console

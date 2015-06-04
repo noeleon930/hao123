@@ -220,3 +220,5 @@ data_kdd/
 
 # NetBeans
 /noeleon930/GenerateFeatureJava/nbproject/private/
+/noeleon930/ConvertToFeatureMatrixJava/nbproject/private/
+/noeleon930/ELMjava/Example/TestElmJava/nbproject/private/

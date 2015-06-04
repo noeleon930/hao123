@@ -1,12 +1,13 @@
 package generatefeaturejava;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  *
  * @author Noel in hao123 >w<
  */
-public class Feature
+public class Feature implements Serializable
 {
 
     /*
@@ -24,6 +25,14 @@ public class Feature
     private int video_times;
     private int discussion_times;
     private int wiki_times;
+
+    private float nagivate_times_norm;
+    private float access_times_norm;
+    private float problem_times_norm;
+    private float page_close_times_norm;
+    private float video_times_norm;
+    private float discussion_times_norm;
+    private float wiki_times_norm;
 
     private int result;
 
@@ -48,6 +57,8 @@ public class Feature
         {
             this.EatData(log);
         });
+
+        this.reCalculate();
     }
 
     private void EatData(String data)
@@ -78,6 +89,26 @@ public class Feature
                 this.wiki_times += 1;
                 break;
         }
+    }
+
+    private void reCalculate()
+    {
+        float total_times
+                = this.nagivate_times
+                + this.access_times
+                + this.problem_times
+                + this.page_close_times
+                + this.video_times
+                + this.discussion_times
+                + this.wiki_times;
+
+        this.nagivate_times_norm = this.nagivate_times / total_times;
+        this.access_times_norm = this.access_times / total_times;
+        this.problem_times_norm = this.problem_times / total_times;
+        this.page_close_times_norm = this.page_close_times / total_times;
+        this.video_times_norm = this.video_times / total_times;
+        this.discussion_times_norm = this.discussion_times / total_times;
+        this.wiki_times_norm = this.wiki_times / total_times;
     }
 
     public int getEnrollment_id()
@@ -118,6 +149,41 @@ public class Feature
     public int getWiki_times()
     {
         return wiki_times;
+    }
+
+    public float getNagivate_times_norm()
+    {
+        return nagivate_times_norm;
+    }
+
+    public float getAccess_times_norm()
+    {
+        return access_times_norm;
+    }
+
+    public float getProblem_times_norm()
+    {
+        return problem_times_norm;
+    }
+
+    public float getPage_close_times_norm()
+    {
+        return page_close_times_norm;
+    }
+
+    public float getVideo_times_norm()
+    {
+        return video_times_norm;
+    }
+
+    public float getDiscussion_times_norm()
+    {
+        return discussion_times_norm;
+    }
+
+    public float getWiki_times_norm()
+    {
+        return wiki_times_norm;
     }
 
     public int getResult()
