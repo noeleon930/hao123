@@ -222,3 +222,7 @@ data_kdd/
 /noeleon930/GenerateFeatureJava/nbproject/private/
 /noeleon930/ConvertToFeatureMatrixJava/nbproject/private/
 /noeleon930/ELMjava/Example/TestElmJava/nbproject/private/
+/noeleon930/GenerateSubmission/nbproject/private/
+/noeleon930/KddJavaToolChain/nbproject/private/
+/noeleon930/javaml-0.1.7/
+*.csv

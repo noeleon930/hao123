@@ -36,6 +36,9 @@ public class Feature implements Serializable
 
     private int result;
 
+    private float total_times;
+    private float total_times_norm;
+
     public void setResult(int result)
     {
         this.result = result;
@@ -93,22 +96,24 @@ public class Feature implements Serializable
 
     private void reCalculate()
     {
-        float total_times
-                = this.nagivate_times
+        this.total_times
+                = (float) (this.nagivate_times
                 + this.access_times
                 + this.problem_times
                 + this.page_close_times
                 + this.video_times
                 + this.discussion_times
-                + this.wiki_times;
+                + this.wiki_times);
 
-        this.nagivate_times_norm = this.nagivate_times / total_times;
-        this.access_times_norm = this.access_times / total_times;
-        this.problem_times_norm = this.problem_times / total_times;
-        this.page_close_times_norm = this.page_close_times / total_times;
-        this.video_times_norm = this.video_times / total_times;
-        this.discussion_times_norm = this.discussion_times / total_times;
-        this.wiki_times_norm = this.wiki_times / total_times;
+        this.nagivate_times_norm = ((float) this.nagivate_times) / total_times;
+        this.access_times_norm = ((float) this.access_times) / total_times;
+        this.problem_times_norm = ((float) this.problem_times) / total_times;
+        this.page_close_times_norm = ((float) this.page_close_times) / total_times;
+        this.video_times_norm = ((float) this.video_times) / total_times;
+        this.discussion_times_norm = ((float) this.discussion_times) / total_times;
+        this.wiki_times_norm = ((float) this.wiki_times) / total_times;
+
+        this.total_times_norm = total_times / 1000.0f;
     }
 
     public int getEnrollment_id()
@@ -189,5 +194,15 @@ public class Feature implements Serializable
     public int getResult()
     {
         return result;
+    }
+
+    public float getTotal_times()
+    {
+        return total_times;
+    }
+
+    public float getTotal_times_norm()
+    {
+        return total_times_norm;
     }
 }

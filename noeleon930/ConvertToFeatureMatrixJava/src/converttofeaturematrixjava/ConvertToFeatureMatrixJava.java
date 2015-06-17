@@ -27,13 +27,18 @@ public class ConvertToFeatureMatrixJava
         // Open serialized obj (enrollment_feature_list)
         FileInputStream objFileIn = new FileInputStream("enrollment_feature_list.obj");
         ObjectInputStream objIn = new ObjectInputStream(objFileIn);
+        FileInputStream objFileIn2 = new FileInputStream("enrollment_feature_test_list.obj");
+        ObjectInputStream objIn2 = new ObjectInputStream(objFileIn2);
 
-        // Here we are
+        // Here we go
         final List<Feature> enrollment_feature_list = (List<Feature>) objIn.readObject();
+        final List<Feature> enrollment_feature_test_list = (List<Feature>) objIn2.readObject();
 
         // Closing I/O
         objIn.close();
         objFileIn.close();
+        objIn2.close();
+        objFileIn2.close();
 
         // Open output file stream for ann.js
         // And write stuff into it
@@ -140,6 +145,135 @@ public class ConvertToFeatureMatrixJava
                 writer.write(forOutput);
                 writer.flush();
             }
+
+            // Close output file stream
+            writer.close();
+        }
+
+        // Open output file stream for scikit-learn
+        // And write stuff into it
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream("random_forest.py"), "UTF-8"))
+        {
+            // Write [ to train
+            writer.write("x = [");
+            writer.flush();
+
+            // Iterating enrollment_feature_list
+            int listSize = enrollment_feature_list.size();
+            for (int i = 0; i < listSize; i++)
+            {
+                // The Feature obj here
+                Feature f = enrollment_feature_list.get(i);
+
+                // Features
+                String forOutput
+                        = "[" + f.getTotal_times_norm() + ", "
+                        + f.getNagivate_times_norm() + ", "
+                        + f.getAccess_times_norm() + ", "
+                        + f.getProblem_times_norm() + ", "
+                        + f.getPage_close_times_norm() + ", "
+                        + f.getVideo_times_norm() + ", "
+                        + f.getDiscussion_times_norm() + ", "
+                        + f.getWiki_times_norm() + "],\n";
+
+                // Special for last one
+                if (i == listSize - 1)
+                {
+                    forOutput
+                            = "[" + f.getTotal_times_norm() + ", "
+                            + f.getNagivate_times_norm() + ", "
+                            + f.getAccess_times_norm() + ", "
+                            + f.getProblem_times_norm() + ", "
+                            + f.getPage_close_times_norm() + ", "
+                            + f.getVideo_times_norm() + ", "
+                            + f.getDiscussion_times_norm() + ", "
+                            + f.getWiki_times_norm() + "]";
+                }
+
+                writer.write(forOutput);
+                writer.flush();
+            }
+
+            // Write ] to train
+            writer.write("]\n");
+            writer.flush();
+
+            // Write [ to truth
+            writer.write("y = [");
+            writer.flush();
+
+            // Iterating enrollment_feature_list
+            for (int i = 0; i < listSize; i++)
+            {
+                // The Feature obj here
+                Feature f = enrollment_feature_list.get(i);
+
+                // Features
+                String forOutput = f.getResult() + ", ";
+
+                // Special for last one
+                if (i == listSize - 1)
+                {
+                    forOutput = f.getResult() + "";
+                }
+
+                writer.write(forOutput);
+                writer.flush();
+            }
+
+            // Write ]to truth
+            writer.write("]\n");
+            writer.flush();
+
+            // Write [ to test
+            writer.write("testX = [");
+            writer.flush();
+
+            listSize = enrollment_feature_test_list.size();
+            for (int i = 0; i < listSize; i++)
+            {
+                // The Feature obj here
+                Feature f = enrollment_feature_test_list.get(i);
+
+                // Features
+                String forOutput
+                        = "[" + f.getTotal_times_norm() + ", "
+                        + f.getNagivate_times_norm() + ", "
+                        + f.getAccess_times_norm() + ", "
+                        + f.getProblem_times_norm() + ", "
+                        + f.getPage_close_times_norm() + ", "
+                        + f.getVideo_times_norm() + ", "
+                        + f.getDiscussion_times_norm() + ", "
+                        + f.getWiki_times_norm() + "],\n";
+
+                // Special for last one
+                if (i == listSize - 1)
+                {
+                    forOutput
+                            = "[" + f.getTotal_times_norm() + ", "
+                            + f.getNagivate_times_norm() + ", "
+                            + f.getAccess_times_norm() + ", "
+                            + f.getProblem_times_norm() + ", "
+                            + f.getPage_close_times_norm() + ", "
+                            + f.getVideo_times_norm() + ", "
+                            + f.getDiscussion_times_norm() + ", "
+                            + f.getWiki_times_norm() + "]";
+                }
+
+                writer.write(forOutput);
+                writer.flush();
+            }
+
+            // Write ] to test
+            writer.write("]\n");
+            writer.flush();
+
+            // Write process
+            writer.write("from sklearn.ensemble import RandomForestClassifier\n"
+                    + "\n"
+                    + "clf = RandomForestClassifier(n_estimators=4000, n_jobs=-1)\n"
+                    + "clf = clf.fit(x, y)\nfileOutput = open(\'output.txt\', \'w\')\nresults = clf.predict_proba(testX)\nfor result in results:\n\tfileOutput.write(str(result)+\'\\n\')\nfileOutput.close()\n");
+            writer.flush();
 
             // Close output file stream
             writer.close();
