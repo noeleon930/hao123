@@ -16,6 +16,7 @@ public class EnrollmentLog implements Serializable
 
     private final int ID;
     private final List<Float> Features;
+    private final List<Float> TimeSeriesFeatures;
     private final List<String> RawLogs;
     private final List<String> SortedLogs;
     private final List<Instant> TimeLine;
@@ -30,6 +31,7 @@ public class EnrollmentLog implements Serializable
     {
         this.ID = ID;
         this.Features = new ArrayList<>();
+        this.TimeSeriesFeatures = new ArrayList<>();
         this.RawLogs = RawLogs;
         this.TimeLine = new ArrayList<>();
         this.SortedLogs = GenerateSortedLogsAndTimeLine();
@@ -67,11 +69,11 @@ public class EnrollmentLog implements Serializable
         // How many courses did this student take? 
         ComputeFeatures.StudentHadCourses(this); // 1
         // How many courses did this student drop?
-        ComputeFeatures.StudentDropouttedCourses(this); // 1
+        // ComputeFeatures.StudentDropouttedCourses(this); // 1
         // How many students did this courses contain?
         ComputeFeatures.CourseHadStudents(this); // 1
         // How many students in this courses dropped?
-        ComputeFeatures.CourseDropouttedStudents(this); // 1
+        // ComputeFeatures.CourseDropouttedStudents(this); // 1
         // Basic raw freq of each course (like how many chapters, how many videos, how many basics..)
         ComputeFeatures.CourseObjectFeatures(this); // 15
         // Basic raw freq of 7 log features in last login
@@ -79,6 +81,12 @@ public class EnrollmentLog implements Serializable
         ComputeFeatures.ModulesAccessed(this); // 15
         // The duration of 7 log features
         ComputeFeatures.SevenFeaturesDuration(this); // 7
+    }
+
+    public void GenerateTimeSeriesFeatures()
+    {
+        ComputeFeatures.Basic7x7Matrix(this);
+        ComputeFeatures.Basic7x7NormMatrix(this);
     }
 
     public int getID()
@@ -139,5 +147,10 @@ public class EnrollmentLog implements Serializable
     public List<Module> getModules()
     {
         return Modules;
+    }
+
+    public List<Float> getTimeSeriesFeatures()
+    {
+        return TimeSeriesFeatures;
     }
 }

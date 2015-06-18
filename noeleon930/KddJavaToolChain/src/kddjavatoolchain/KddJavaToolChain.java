@@ -26,6 +26,7 @@ import kddjavatoolchain.DataFormat.Module;
 import kddjavatoolchain.DataProcess.ComputeCourses;
 import kddjavatoolchain.DataProcess.ComputeEnrollments;
 import kddjavatoolchain.DataProcess.ComputeStudents;
+import kddjavatoolchain.DataProcess.ComputeSummarizing;
 import kddjavatoolchain.DataProcess.ExtractFeatures;
 import org.nustaq.serialization.FSTObjectInput;
 import org.nustaq.serialization.FSTObjectOutput;
@@ -90,13 +91,17 @@ public class KddJavaToolChain
                         break;
                     case "-output-csv":
                         OutputAsCSV();
-                        OutputAsCSV_PercentVer();
+//                        OutputAsCSV_PercentVer();
+                        OutputAsCSV_Timeseries();
                         break;
                     case "-check-data":
                         SetEnvironment();
                         LoadEnrollmentFiles();
                         LoadTruthFile();
                         CheckData();
+                        break;
+                    case "-surm":
+                        ComputeSummarizing.GetLonggestLogLength();
                         break;
                     case "-default":
                         SetEnvironment();
@@ -108,6 +113,9 @@ public class KddJavaToolChain
                         ComputeCourses.Compute();
                         ComputeEnrollments.Compute();
                         ExtractFeaturesFromFiles();
+                        OutputAsCSV();
+//                        OutputAsCSV_PercentVer();
+                        OutputAsCSV_Timeseries();
                         SerializeThem();
                         DestroyObjects();
                         break;
@@ -252,11 +260,13 @@ public class KddJavaToolChain
         train_enrollments_map.entrySet().parallelStream().forEach(e ->
         {
             e.getValue().GenerateFeatures();
+            e.getValue().GenerateTimeSeriesFeatures();
         });
 
         test_enrollments_map.entrySet().parallelStream().forEach(e ->
         {
             e.getValue().GenerateFeatures();
+            e.getValue().GenerateTimeSeriesFeatures();
         });
 
         p("Extract Features From Files Completed...");
@@ -405,7 +415,57 @@ public class KddJavaToolChain
     {
         try (Writer writer = new OutputStreamWriter(new FileOutputStream("train_feature.csv"), "UTF-8"))
         {
-            writer.write("nagivate_times,page_close_times,video_times,access_times,wiki_times,problem_times,discussion_times,courses_student_had,courses_student_dropout,students_course_had,students_course_dropout,course_about_num,course_chapter_num,course_course_num,course_course_info_num,course_html_num,course_outlink_num,course_problem_num,course_sequential_num,course_static_tab_num,course_vertical_num,course_video_num,course_combinedopenended_num,course_peergrading_num,course_discussion_num,course_dictation_num,enrollment_about_num,enrollment_chapter_num,enrollment_course_num,enrollment_course_info_num,enrollment_html_num,enrollment_outlink_num,enrollment_problem_num,enrollment_sequential_num,enrollment_static_tab_num,enrollment_vertical_num,enrollment_video_num,enrollment_combinedopenended_num,enrollment_peergrading_num,enrollment_discussion_num,enrollment_dictation_num,nagivate_duration,page_close_duration,video_duration,access_duration,wiki_duration,problem_duration,discussion_duration\n");
+            writer.write("nagivate_times"
+                    + ",page_close_times"
+                    + ",access_times"
+                    + ",video_times"
+                    + ",wiki_times"
+                    + ",problem_times"
+                    + ",discussion_times"
+                    + ",courses_student_had"
+                    + ",students_course_had"
+                    + ",course_about_num"
+                    + ",course_chapter_num"
+                    + ",course_course_num"
+                    + ",course_course_info_num"
+                    + ",course_html_num"
+                    + ",course_outlink_num"
+                    + ",course_problem_num"
+                    + ",course_sequential_num"
+                    + ",course_static_tab_num"
+                    + ",course_vertical_num"
+                    + ",course_video_num"
+                    + ",course_combinedopenended_num"
+                    + ",course_peergrading_num"
+                    + ",course_discussion_num"
+                    + ",course_dictation_num"
+                    + ",enrollment_about_num"
+                    + ",enrollment_chapter_num"
+                    + ",enrollment_course_num"
+                    + ",enrollment_course_info_num"
+                    + ",enrollment_html_num"
+                    + ",enrollment_outlink_num"
+                    + ",enrollment_problem_num"
+                    + ",enrollment_sequential_num"
+                    + ",enrollment_static_tab_num"
+                    + ",enrollment_vertical_num"
+                    + ",enrollment_video_num"
+                    + ",enrollment_combinedopenended_num"
+                    + ",enrollment_peergrading_num"
+                    + ",enrollment_discussion_num"
+                    + ",enrollment_dictation_num"
+                    + ",nagivate_duration"
+                    + ",page_close_duration"
+                    + ",access_duration"
+                    + ",video_duration"
+                    + ",wiki_duration"
+                    + ",problem_duration"
+                    + ",discussion_duration"
+                    + ",total_event_times"
+                    + ",total_enrollment_module_num"
+                    + ",total_duration_times"
+                    + "\n");
+            writer.flush();
 
             train_enrollments_map
                     .entrySet()
@@ -425,6 +485,32 @@ public class KddJavaToolChain
                                     .map(f -> String.valueOf(f))
                                     .collect(Collectors.joining(","));
 
+                                    float raw7sum
+                                    = e
+                                    .getFeatures()
+                                    .subList(0, 7)
+                                    .stream()
+                                    .collect(Collectors.summingDouble(f -> (double) f))
+                                    .floatValue();
+
+                                    float enrollment15sum
+                                    = e
+                                    .getFeatures()
+                                    .subList(24, 39)
+                                    .stream()
+                                    .collect(Collectors.summingDouble(f -> (double) f))
+                                    .floatValue();
+
+                                    float duration7sum
+                                    = e
+                                    .getFeatures()
+                                    .subList(39, 46)
+                                    .stream()
+                                    .collect(Collectors.summingDouble(f -> (double) f))
+                                    .floatValue();
+
+                                    tmpLine = tmpLine + "," + String.valueOf(raw7sum) + "," + String.valueOf(enrollment15sum) + "," + String.valueOf(duration7sum);
+
                                     writer.write(tmpLine + "\n");
                                     writer.flush();
                                 }
@@ -439,7 +525,57 @@ public class KddJavaToolChain
 
         try (Writer writer = new OutputStreamWriter(new FileOutputStream("test_feature.csv"), "UTF-8"))
         {
-            writer.write("nagivate_times,page_close_times,video_times,access_times,wiki_times,problem_times,discussion_times,courses_student_had,courses_student_dropout,students_course_had,students_course_dropout,course_about_num,course_chapter_num,course_course_num,course_course_info_num,course_html_num,course_outlink_num,course_problem_num,course_sequential_num,course_static_tab_num,course_vertical_num,course_video_num,course_combinedopenended_num,course_peergrading_num,course_discussion_num,course_dictation_num,enrollment_about_num,enrollment_chapter_num,enrollment_course_num,enrollment_course_info_num,enrollment_html_num,enrollment_outlink_num,enrollment_problem_num,enrollment_sequential_num,enrollment_static_tab_num,enrollment_vertical_num,enrollment_video_num,enrollment_combinedopenended_num,enrollment_peergrading_num,enrollment_discussion_num,enrollment_dictation_num,nagivate_duration,page_close_duration,video_duration,access_duration,wiki_duration,problem_duration,discussion_duration\n");
+            writer.write("nagivate_times"
+                    + ",page_close_times"
+                    + ",access_times"
+                    + ",video_times"
+                    + ",wiki_times"
+                    + ",problem_times"
+                    + ",discussion_times"
+                    + ",courses_student_had"
+                    + ",students_course_had"
+                    + ",course_about_num"
+                    + ",course_chapter_num"
+                    + ",course_course_num"
+                    + ",course_course_info_num"
+                    + ",course_html_num"
+                    + ",course_outlink_num"
+                    + ",course_problem_num"
+                    + ",course_sequential_num"
+                    + ",course_static_tab_num"
+                    + ",course_vertical_num"
+                    + ",course_video_num"
+                    + ",course_combinedopenended_num"
+                    + ",course_peergrading_num"
+                    + ",course_discussion_num"
+                    + ",course_dictation_num"
+                    + ",enrollment_about_num"
+                    + ",enrollment_chapter_num"
+                    + ",enrollment_course_num"
+                    + ",enrollment_course_info_num"
+                    + ",enrollment_html_num"
+                    + ",enrollment_outlink_num"
+                    + ",enrollment_problem_num"
+                    + ",enrollment_sequential_num"
+                    + ",enrollment_static_tab_num"
+                    + ",enrollment_vertical_num"
+                    + ",enrollment_video_num"
+                    + ",enrollment_combinedopenended_num"
+                    + ",enrollment_peergrading_num"
+                    + ",enrollment_discussion_num"
+                    + ",enrollment_dictation_num"
+                    + ",nagivate_duration"
+                    + ",page_close_duration"
+                    + ",access_duration"
+                    + ",video_duration"
+                    + ",wiki_duration"
+                    + ",problem_duration"
+                    + ",discussion_duration"
+                    + ",total_event_times"
+                    + ",total_enrollment_module_num"
+                    + ",total_duration_times"
+                    + "\n");
+            writer.flush();
 
             test_enrollments_map
                     .entrySet()
@@ -458,6 +594,32 @@ public class KddJavaToolChain
                                     .sequential()
                                     .map(f -> String.valueOf(f))
                                     .collect(Collectors.joining(","));
+
+                                    float raw7sum
+                                    = e
+                                    .getFeatures()
+                                    .subList(0, 7)
+                                    .stream()
+                                    .collect(Collectors.summingDouble(f -> (double) f))
+                                    .floatValue();
+
+                                    float enrollment15sum
+                                    = e
+                                    .getFeatures()
+                                    .subList(24, 39)
+                                    .stream()
+                                    .collect(Collectors.summingDouble(f -> (double) f))
+                                    .floatValue();
+
+                                    float duration7sum
+                                    = e
+                                    .getFeatures()
+                                    .subList(39, 46)
+                                    .stream()
+                                    .collect(Collectors.summingDouble(f -> (double) f))
+                                    .floatValue();
+
+                                    tmpLine = tmpLine + "," + String.valueOf(raw7sum) + "," + String.valueOf(enrollment15sum) + "," + String.valueOf(duration7sum);
 
                                     writer.write(tmpLine + "\n");
                                     writer.flush();
@@ -476,32 +638,72 @@ public class KddJavaToolChain
     {
         try (Writer writer = new OutputStreamWriter(new FileOutputStream("train_feature_percentage.csv"), "UTF-8"))
         {
-            writer.write("nagivate_times,page_close_times,video_times,access_times,wiki_times,problem_times,discussion_times,courses_student_dropout,students_course_dropout,course_about_num,course_chapter_num,course_course_num,course_course_info_num,course_html_num,course_outlink_num,course_problem_num,course_sequential_num,course_static_tab_num,course_vertical_num,course_video_num,course_combinedopenended_num,course_peergrading_num,course_discussion_num,course_dictation_num,enrollment_about_num,enrollment_chapter_num,enrollment_course_num,enrollment_course_info_num,enrollment_html_num,enrollment_outlink_num,enrollment_problem_num,enrollment_sequential_num,enrollment_static_tab_num,enrollment_vertical_num,enrollment_video_num,enrollment_combinedopenended_num,enrollment_peergrading_num,enrollment_discussion_num,enrollment_dictation_num,nagivate_duration,page_close_duration,video_duration,access_duration,wiki_duration,problem_duration,discussion_duration\n");
+            writer.write("nagivate_times"
+                    + ",page_close_times"
+                    + ",access_times"
+                    + ",video_times"
+                    + ",wiki_times"
+                    + ",problem_times"
+                    + ",discussion_times"
+                    + ",course_about_num"
+                    + ",course_chapter_num"
+                    + ",course_course_num"
+                    + ",course_course_info_num"
+                    + ",course_html_num"
+                    + ",course_outlink_num"
+                    + ",course_problem_num"
+                    + ",course_sequential_num"
+                    + ",course_static_tab_num"
+                    + ",course_vertical_num"
+                    + ",course_video_num"
+                    + ",course_combinedopenended_num"
+                    + ",course_peergrading_num"
+                    + ",course_discussion_num"
+                    + ",course_dictation_num"
+                    + ",enrollment_about_num"
+                    + ",enrollment_chapter_num"
+                    + ",enrollment_course_num"
+                    + ",enrollment_course_info_num"
+                    + ",enrollment_html_num"
+                    + ",enrollment_outlink_num"
+                    + ",enrollment_problem_num"
+                    + ",enrollment_sequential_num"
+                    + ",enrollment_static_tab_num"
+                    + ",enrollment_vertical_num"
+                    + ",enrollment_video_num"
+                    + ",enrollment_combinedopenended_num"
+                    + ",enrollment_peergrading_num"
+                    + ",enrollment_discussion_num"
+                    + ",enrollment_dictation_num"
+                    + ",nagivate_duration"
+                    + ",page_close_duration"
+                    + ",access_duration"
+                    + ",video_duration"
+                    + ",wiki_duration"
+                    + ",problem_duration"
+                    + ",discussion_duration\n");
             writer.flush();
 
             train_enrollments_map
                     .entrySet()
                     .parallelStream()
                     .map(e -> e.getValue())
+                    .sorted((e1, e2) -> e1.getID() - e2.getID())
                     .map(e -> e.getFeatures())
                     .sequential()
                     .forEachOrdered(fl ->
                             {
                                 float raw7_sum = fl.subList(0, 7).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
-                                float stu2_sum = fl.subList(7, 9).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
-                                float cors2_sum = fl.subList(9, 11).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
-                                float cors15_sum = fl.subList(11, 26).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
-                                float enr15_sum = fl.subList(26, 41).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
-                                float time7_sum = fl.subList(41, 48).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
+                                float cors15_sum = fl.subList(9, 24).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
+                                float enr15_sum = fl.subList(24, 39).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
+                                float time7_sum = fl.subList(39, 46).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
 
                                 String raw7 = fl.subList(0, 7).stream().sequential().map(f -> f / raw7_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
-                                String stu2 = fl.subList(8, 9).stream().sequential().map(f -> f / stu2_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
-                                String cors2 = fl.subList(10, 11).stream().sequential().map(f -> f / cors2_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
-                                String cors15 = fl.subList(11, 26).stream().sequential().map(f -> f / cors15_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
-                                String enr15 = fl.subList(26, 41).stream().sequential().map(f -> f / enr15_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
-                                String time7 = fl.subList(41, 48).stream().sequential().map(f -> f / time7_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
+                                String cors15 = fl.subList(9, 24).stream().sequential().map(f -> f / cors15_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
+                                String enr15 = fl.subList(24, 39).stream().sequential().map(f -> f / enr15_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
+                                String time7 = fl.subList(39, 46).stream().sequential().map(f -> f / time7_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
 
-                                String total = Arrays.asList(raw7, stu2, cors2, cors15, enr15, time7).stream().sequential().collect(Collectors.joining(","));
+                                String total = Arrays.asList(raw7, cors15, enr15, time7).stream().sequential().collect(Collectors.joining(","));
                                 total = total.replace("NaN", "0.0").replace("E", "e");
 
                                 try
@@ -520,32 +722,72 @@ public class KddJavaToolChain
 
         try (Writer writer = new OutputStreamWriter(new FileOutputStream("test_feature_percentage.csv"), "UTF-8"))
         {
-            writer.write("nagivate_times,page_close_times,video_times,access_times,wiki_times,problem_times,discussion_times,courses_student_dropout,students_course_dropout,course_about_num,course_chapter_num,course_course_num,course_course_info_num,course_html_num,course_outlink_num,course_problem_num,course_sequential_num,course_static_tab_num,course_vertical_num,course_video_num,course_combinedopenended_num,course_peergrading_num,course_discussion_num,course_dictation_num,enrollment_about_num,enrollment_chapter_num,enrollment_course_num,enrollment_course_info_num,enrollment_html_num,enrollment_outlink_num,enrollment_problem_num,enrollment_sequential_num,enrollment_static_tab_num,enrollment_vertical_num,enrollment_video_num,enrollment_combinedopenended_num,enrollment_peergrading_num,enrollment_discussion_num,enrollment_dictation_num,nagivate_duration,page_close_duration,video_duration,access_duration,wiki_duration,problem_duration,discussion_duration\n");
+            writer.write("nagivate_times"
+                    + ",page_close_times"
+                    + ",access_times"
+                    + ",video_times"
+                    + ",wiki_times"
+                    + ",problem_times"
+                    + ",discussion_times"
+                    + ",course_about_num"
+                    + ",course_chapter_num"
+                    + ",course_course_num"
+                    + ",course_course_info_num"
+                    + ",course_html_num"
+                    + ",course_outlink_num"
+                    + ",course_problem_num"
+                    + ",course_sequential_num"
+                    + ",course_static_tab_num"
+                    + ",course_vertical_num"
+                    + ",course_video_num"
+                    + ",course_combinedopenended_num"
+                    + ",course_peergrading_num"
+                    + ",course_discussion_num"
+                    + ",course_dictation_num"
+                    + ",enrollment_about_num"
+                    + ",enrollment_chapter_num"
+                    + ",enrollment_course_num"
+                    + ",enrollment_course_info_num"
+                    + ",enrollment_html_num"
+                    + ",enrollment_outlink_num"
+                    + ",enrollment_problem_num"
+                    + ",enrollment_sequential_num"
+                    + ",enrollment_static_tab_num"
+                    + ",enrollment_vertical_num"
+                    + ",enrollment_video_num"
+                    + ",enrollment_combinedopenended_num"
+                    + ",enrollment_peergrading_num"
+                    + ",enrollment_discussion_num"
+                    + ",enrollment_dictation_num"
+                    + ",nagivate_duration"
+                    + ",page_close_duration"
+                    + ",access_duration"
+                    + ",video_duration"
+                    + ",wiki_duration"
+                    + ",problem_duration"
+                    + ",discussion_duration\n");
             writer.flush();
 
             test_enrollments_map
                     .entrySet()
                     .parallelStream()
                     .map(e -> e.getValue())
+                    .sorted((e1, e2) -> e1.getID() - e2.getID())
                     .map(e -> e.getFeatures())
                     .sequential()
                     .forEachOrdered(fl ->
                             {
                                 float raw7_sum = fl.subList(0, 7).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
-                                float stu2_sum = fl.subList(7, 9).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
-                                float cors2_sum = fl.subList(9, 11).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
-                                float cors15_sum = fl.subList(11, 26).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
-                                float enr15_sum = fl.subList(26, 41).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
-                                float time7_sum = fl.subList(41, 48).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
+                                float cors15_sum = fl.subList(9, 24).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
+                                float enr15_sum = fl.subList(24, 39).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
+                                float time7_sum = fl.subList(39, 46).stream().reduce(0.0f, (f1, f2) -> f1 + f2);
 
                                 String raw7 = fl.subList(0, 7).stream().sequential().map(f -> f / raw7_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
-                                String stu2 = fl.subList(8, 9).stream().sequential().map(f -> f / stu2_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
-                                String cors2 = fl.subList(10, 11).stream().sequential().map(f -> f / cors2_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
-                                String cors15 = fl.subList(11, 26).stream().sequential().map(f -> f / cors15_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
-                                String enr15 = fl.subList(26, 41).stream().sequential().map(f -> f / enr15_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
-                                String time7 = fl.subList(41, 48).stream().sequential().map(f -> f / time7_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
+                                String cors15 = fl.subList(9, 24).stream().sequential().map(f -> f / cors15_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
+                                String enr15 = fl.subList(24, 39).stream().sequential().map(f -> f / enr15_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
+                                String time7 = fl.subList(39, 46).stream().sequential().map(f -> f / time7_sum).map(f -> String.valueOf(f)).sequential().collect(Collectors.joining(","));
 
-                                String total = Arrays.asList(raw7, stu2, cors2, cors15, enr15, time7).stream().sequential().collect(Collectors.joining(","));
+                                String total = Arrays.asList(raw7, cors15, enr15, time7).stream().sequential().collect(Collectors.joining(","));
                                 total = total.replace("NaN", "0.0").replace("E", "e");
 
                                 try
@@ -562,6 +804,73 @@ public class KddJavaToolChain
             writer.close();
         }
 
+    }
+
+    private static void OutputAsCSV_Timeseries() throws UnsupportedEncodingException, FileNotFoundException, IOException
+    {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream("train_feature_timeseries.csv"), "UTF-8"))
+        {
+            train_enrollments_map
+                    .entrySet()
+                    .parallelStream()
+                    .map(e -> e.getValue())
+                    .sorted((e1, e2) -> e1.getID() - e2.getID())
+                    .map(e -> e.getTimeSeriesFeatures())
+                    .sequential()
+                    .forEachOrdered(tsf ->
+                            {
+
+                                String total
+                                = tsf
+                                .stream()
+                                .map(f -> String.valueOf(f))
+                                .collect(Collectors.joining(","));
+
+                                try
+                                {
+                                    writer.write(total + "\n");
+                                    writer.flush();
+                                }
+                                catch (IOException ex)
+                                {
+                                    Logger.getLogger(KddJavaToolChain.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                    });
+
+            writer.close();
+        }
+
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream("test_feature_timeseries.csv"), "UTF-8"))
+        {
+            test_enrollments_map
+                    .entrySet()
+                    .parallelStream()
+                    .map(e -> e.getValue())
+                    .sorted((e1, e2) -> e1.getID() - e2.getID())
+                    .map(e -> e.getTimeSeriesFeatures())
+                    .sequential()
+                    .forEachOrdered(tsf ->
+                            {
+
+                                String total
+                                = tsf
+                                .stream()
+                                .map(f -> String.valueOf(f))
+                                .collect(Collectors.joining(","));
+
+                                try
+                                {
+                                    writer.write(total + "\n");
+                                    writer.flush();
+                                }
+                                catch (IOException ex)
+                                {
+                                    Logger.getLogger(KddJavaToolChain.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                    });
+
+            writer.close();
+        }
     }
 
     private static void CheckData()
@@ -613,6 +922,16 @@ public class KddJavaToolChain
     public static Map<Integer, Integer> getTrain_truth_train_map()
     {
         return train_truth_train_map;
+    }
+
+    public static Map<Integer, EnrollmentLog> getTrain_enrollments_map()
+    {
+        return train_enrollments_map;
+    }
+
+    public static Map<Integer, EnrollmentLog> getTest_enrollments_map()
+    {
+        return test_enrollments_map;
     }
 
 }

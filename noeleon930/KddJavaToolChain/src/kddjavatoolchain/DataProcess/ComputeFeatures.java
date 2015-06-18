@@ -2,6 +2,7 @@ package kddjavatoolchain.DataProcess;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +30,8 @@ public class ComputeFeatures
 
         e.getFeatures().add((float) feature7_map.getOrDefault("nagivate", 0L));
         e.getFeatures().add((float) feature7_map.getOrDefault("page_close", 0L));
-        e.getFeatures().add((float) feature7_map.getOrDefault("video", 0L));
         e.getFeatures().add((float) feature7_map.getOrDefault("access", 0L));
+        e.getFeatures().add((float) feature7_map.getOrDefault("video", 0L));
         e.getFeatures().add((float) feature7_map.getOrDefault("wiki", 0L));
         e.getFeatures().add((float) feature7_map.getOrDefault("problem", 0L));
         e.getFeatures().add((float) feature7_map.getOrDefault("discussion", 0L));
@@ -60,7 +61,7 @@ public class ComputeFeatures
 
         int answer = ComputeCourses.courses.get(course_id).getStudents_num();
 
-        e.getFeatures().add((float) answer / 10.0f);
+        e.getFeatures().add((float) answer / 100.0f);
     }
 
     public static void CourseDropouttedStudents(EnrollmentLog e)
@@ -69,7 +70,7 @@ public class ComputeFeatures
 
         int answer = ComputeCourses.courses.get(course_id).getDropouts();
 
-        e.getFeatures().add((float) answer / 10.0f);
+        e.getFeatures().add((float) answer / 100.0f);
     }
 
     public static void CourseObjectFeatures(EnrollmentLog e)
@@ -182,12 +183,211 @@ public class ComputeFeatures
             }
         }
 
-        e.getFeatures().add(durationMap.getOrDefault("nagivate", new LongAdder()).floatValue() / 10.0f);
-        e.getFeatures().add(durationMap.getOrDefault("page_close", new LongAdder()).floatValue() / 10.0f);
-        e.getFeatures().add(durationMap.getOrDefault("video", new LongAdder()).floatValue() / 10.0f);
-        e.getFeatures().add(durationMap.getOrDefault("access", new LongAdder()).floatValue() / 10.0f);
-        e.getFeatures().add(durationMap.getOrDefault("wiki", new LongAdder()).floatValue() / 10.0f);
-        e.getFeatures().add(durationMap.getOrDefault("problem", new LongAdder()).floatValue() / 10.0f);
-        e.getFeatures().add(durationMap.getOrDefault("discussion", new LongAdder()).floatValue() / 10.0f);
+        e.getFeatures().add(durationMap.getOrDefault("nagivate", new LongAdder()).floatValue() / 100.0f);
+        e.getFeatures().add(durationMap.getOrDefault("page_close", new LongAdder()).floatValue() / 100.0f);
+        e.getFeatures().add(durationMap.getOrDefault("access", new LongAdder()).floatValue() / 100.0f);
+        e.getFeatures().add(durationMap.getOrDefault("video", new LongAdder()).floatValue() / 100.0f);
+        e.getFeatures().add(durationMap.getOrDefault("wiki", new LongAdder()).floatValue() / 100.0f);
+        e.getFeatures().add(durationMap.getOrDefault("problem", new LongAdder()).floatValue() / 100.0f);
+        e.getFeatures().add(durationMap.getOrDefault("discussion", new LongAdder()).floatValue() / 100.0f);
+    }
+
+    public static void Basic7x7Matrix(EnrollmentLog e)
+    {
+        int[][] matrix = new int[7][7];
+        for (int i = 0; i < 7; i++)
+        {
+            for (int j = 0; j < 7; j++)
+            {
+                matrix[i][j] = 0;
+            }
+        }
+
+        List<Integer> events
+                = e.getSortedLogs()
+                .stream()
+                .sequential()
+                .map(str -> str.split(",")[3])
+                .map(event ->
+                        {
+                            switch (event)
+                            {
+                                case "nagivate":
+                                    return 0;
+                                case "page_close":
+                                    return 1;
+                                case "access":
+                                    return 2;
+                                case "video":
+                                    return 3;
+                                case "wiki":
+                                    return 4;
+                                case "problem":
+                                    return 5;
+                                case "discussion":
+                                    return 6;
+                                default:
+                                    return -1;
+                            }
+                })
+                .collect(Collectors.toList());
+
+        int listSize = events.size();
+        for (int i = 0; i < listSize; i++)
+        {
+            if (i + 1 == listSize)
+            {
+                break;
+            }
+            else
+            {
+                matrix[events.get(i)][events.get(i + 1)] += 1;
+            }
+        }
+
+        List<Float> to49d = e.getTimeSeriesFeatures();
+
+        for (int i = 0; i < 7; i++)
+        {
+            for (int j = 0; j < 7; j++)
+            {
+                to49d.add((float) matrix[i][j]);
+            }
+        }
+    }
+
+    public static void Basic7x7NormMatrix(EnrollmentLog e)
+    {
+        int[][] matrix = new int[7][7];
+        for (int i = 0; i < 7; i++)
+        {
+            for (int j = 0; j < 7; j++)
+            {
+                matrix[i][j] = 0;
+            }
+        }
+
+        List<Integer> events
+                = e.getSortedLogs()
+                .stream()
+                .sequential()
+                .map(str -> str.split(",")[3])
+                .map(event ->
+                        {
+                            switch (event)
+                            {
+                                case "nagivate":
+                                    return 0;
+                                case "page_close":
+                                    return 1;
+                                case "access":
+                                    return 2;
+                                case "video":
+                                    return 3;
+                                case "wiki":
+                                    return 4;
+                                case "problem":
+                                    return 5;
+                                case "discussion":
+                                    return 6;
+                                default:
+                                    return -1;
+                            }
+                })
+                .collect(Collectors.toList());
+
+        int listSize = events.size();
+        for (int i = 0; i < listSize; i++)
+        {
+            if (i + 1 == listSize)
+            {
+                break;
+            }
+            else
+            {
+                matrix[events.get(i)][events.get(i + 1)] += 1;
+            }
+        }
+
+        List<Float> to49d = e.getTimeSeriesFeatures();
+
+        for (int i = 0; i < 7; i++)
+        {
+            float sum = (float) Arrays.stream(matrix[i])
+                    .asDoubleStream()
+                    .sum();
+
+            for (int j = 0; j < 7; j++)
+            {
+                if (sum > 0.0)
+                {
+                    to49d.add(((float) matrix[i][j]) / sum * 100.0f);
+                }
+                else
+                {
+                    to49d.add(100.0f / 7.0f);
+                }
+
+            }
+        }
+    }
+
+    public static void AccumulateTimeSeries(EnrollmentLog e)
+    {
+
+        List<Float> timeLine
+                = e.getSortedLogs()
+                .stream()
+                .sequential()
+                .map(str -> str.split(",")[3])
+                .map(event ->
+                        {
+                            switch (event)
+                            {
+                                case "nagivate":
+                                    return 0.08f;
+                                case "page_close":
+                                    return 0.1f;
+                                case "access":
+                                    return 0.15f;
+                                case "video":
+                                    return 0.2f;
+                                case "wiki":
+                                    return 0.16f;
+                                case "problem":
+                                    return 0.34f;
+                                case "discussion":
+                                    return 0.4f;
+                                default:
+                                    return -1.0f;
+                            }
+                })
+                .collect(Collectors.toList());
+
+        int timeLineLength = timeLine.size();
+        int targetNum = 8000;
+        float zoomTime = ((float) targetNum) / ((float) timeLineLength);
+
+        for (int i = 0; i < timeLineLength; i++)
+        {
+            if (i + 1 == timeLineLength)
+            {
+                break;
+            }
+            else
+            {
+                e.getTimeSeriesFeatures().add(timeLine.get(i));
+
+                float gap = timeLine.get(i + 1) - timeLine.get(i);
+                float each = gap / zoomTime;
+                float increTime = gap / each;
+
+                for (float j = 1; j <= increTime - 1.0f; j = j + 1.0f)
+                {
+                    e.getTimeSeriesFeatures().add(timeLine.get(i) + each * j);
+                }
+            }
+        }
+
     }
 }
