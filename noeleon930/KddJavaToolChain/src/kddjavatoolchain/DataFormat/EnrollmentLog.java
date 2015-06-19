@@ -13,7 +13,7 @@ import kddjavatoolchain.DataProcess.ComputeFeatures;
  */
 public class EnrollmentLog implements Serializable
 {
-
+    
     private final int ID;
     private final List<Float> Features;
     private final List<Float> TimeSeriesFeatures;
@@ -21,12 +21,12 @@ public class EnrollmentLog implements Serializable
     private final List<String> SortedLogs;
     private final List<Instant> TimeLine;
     private final List<Module> Modules;
-
+    
     private int Result;
-
+    
     private String username;
     private String course_id;
-
+    
     public EnrollmentLog(int ID, List<String> RawLogs)
     {
         this.ID = ID;
@@ -38,7 +38,7 @@ public class EnrollmentLog implements Serializable
         this.Modules = GenerateModules();
         this.Result = -1;
     }
-
+    
     private List<String> GenerateSortedLogsAndTimeLine()
     {
         return this.RawLogs
@@ -52,7 +52,7 @@ public class EnrollmentLog implements Serializable
                 })
                 .collect(Collectors.toList());
     }
-
+    
     private List<Module> GenerateModules()
     {
         return this.RawLogs
@@ -61,7 +61,7 @@ public class EnrollmentLog implements Serializable
                 .map(str -> new Module(str))
                 .collect(Collectors.toList());
     }
-
+    
     public void GenerateFeatures()
     {
         // Basic raw freq of 7 log features
@@ -82,73 +82,75 @@ public class EnrollmentLog implements Serializable
         // The duration of 7 log features
         ComputeFeatures.SevenFeaturesDuration(this); // 7
     }
-
+    
     public void GenerateTimeSeriesFeatures()
     {
         ComputeFeatures.Basic7x7Matrix(this);
         ComputeFeatures.Basic7x7NormMatrix(this);
+        ComputeFeatures.Duration7x7Matrix(this);
+        ComputeFeatures.Duration7x7NormMatrix(this);
     }
-
+    
     public int getID()
     {
         return ID;
     }
-
+    
     public List<Float> getFeatures()
     {
         return Features;
     }
-
+    
     public List<String> getRawLogs()
     {
         return RawLogs;
     }
-
+    
     public List<String> getSortedLogs()
     {
         return SortedLogs;
     }
-
+    
     public List<Instant> getTimeLine()
     {
         return TimeLine;
     }
-
+    
     public int getResult()
     {
         return Result;
     }
-
+    
     public void setResult(int Result)
     {
         this.Result = Result;
     }
-
+    
     public String getUsername()
     {
         return username;
     }
-
+    
     public void setUsername(String username)
     {
         this.username = username;
     }
-
+    
     public String getCourse_id()
     {
         return course_id;
     }
-
+    
     public void setCourse_id(String course_id)
     {
         this.course_id = course_id;
     }
-
+    
     public List<Module> getModules()
     {
         return Modules;
     }
-
+    
     public List<Float> getTimeSeriesFeatures()
     {
         return TimeSeriesFeatures;
