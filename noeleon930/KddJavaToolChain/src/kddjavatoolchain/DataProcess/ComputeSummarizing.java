@@ -94,4 +94,9 @@ public class ComputeSummarizing
         System.out.println(train_max.get() + ", " + test_max.get());
 
     }
+
+    public static void CourseAndDropout()
+    {
+
+    }
 }

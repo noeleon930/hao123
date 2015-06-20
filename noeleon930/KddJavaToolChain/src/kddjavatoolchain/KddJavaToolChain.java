@@ -107,8 +107,8 @@ public class KddJavaToolChain
                         ComputeEnrollments.Compute();
                         ExtractFeaturesFromFiles();
                         OutputAsCSV();
-                        SerializeThem();
-                        DestroyObjects();
+//                        SerializeThem();
+//                        DestroyObjects();
                         break;
                 }
             }
@@ -367,7 +367,7 @@ public class KddJavaToolChain
                 .map(e -> e.getValue())
                 .sorted((e1, e2) -> e1.getID() - e2.getID())
                 .sequential()
-                .forEachOrdered(e -> System.out.println(e.getFeatures()));
+                .forEachOrdered(e -> System.out.println(e.getSortedLogs()));
 
         p("-*-*-*-*-*-*-*-*-*-*-*-");
 
@@ -377,7 +377,7 @@ public class KddJavaToolChain
                 .map(e -> e.getValue())
                 .sorted((e1, e2) -> e1.getID() - e2.getID())
                 .sequential()
-                .forEachOrdered(e -> System.out.println(e.getFeatures()));
+                .forEachOrdered(e -> System.out.println(e.getSortedLogs()));
 
         p("Print Them Out Completed...");
     }
@@ -404,10 +404,14 @@ public class KddJavaToolChain
 
     private static void OutputAsCSV() throws FileNotFoundException, IOException
     {
+        p("Output As CSV...");
+
         OutputAsCsv.RawCSV();
         OutputAsCsv.PercentCSV();
         OutputAsCsv.TimeseriesCSV();
-        OutputAsCsv.RawPlusTimeseriesCSV();
+//        OutputAsCsv.RawPlusTimeseriesCSV();
+
+        p("Output As CSV Completed...");
     }
 
     private static void CheckData()

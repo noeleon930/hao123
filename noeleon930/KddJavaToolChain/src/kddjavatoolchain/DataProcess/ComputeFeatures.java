@@ -321,11 +321,11 @@ public class ComputeFeatures
             {
                 if (sum > 0.0)
                 {
-                    to49d.add(((float) matrix[i][j]) / sum * 100.0f);
+                    to49d.add(((float) matrix[i][j]) / sum);
                 }
                 else
                 {
-                    to49d.add(100.0f / 7.0f);
+                    to49d.add(1.0f / 7.0f);
                 }
 
             }
@@ -488,73 +488,129 @@ public class ComputeFeatures
             {
                 if (sum > 0.0)
                 {
-                    to196d.add(((float) matrix[i][j]) / sum * 100.0f);
+                    to196d.add(((float) matrix[i][j]) / sum * 1.0f);
                 }
                 else
                 {
-                    to196d.add(100.0f / 7.0f);
+                    to196d.add(1.0f / 7.0f);
                 }
 
             }
         }
     }
 
-    public static void AccumulateTimeSeries(EnrollmentLog e)
+    private static class TimeActionVector
     {
 
-        List<Float> timeLine
-                = e.getSortedLogs()
+        public final float x;
+        public final float y;
+
+        public TimeActionVector(float x, float y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    public static void OffsetTimeSeries(EnrollmentLog e)
+    {
+        // (x, y) -> (time offset, action offset)
+        List<String> logs = e.getSortedLogs();
+//        List<TimeActionVector> vectors = new ArrayList<>();
+        List<Float> vectors;
+
+        List<Float> events
+                = logs
                 .stream()
                 .sequential()
-                .map(str -> str.split(",")[3])
+                .map(str -> str.split(","))
+                .map(sarr -> sarr[3])
                 .map(event ->
                         {
                             switch (event)
                             {
                                 case "nagivate":
-                                    return 0.08f;
+                                    return 0.0f;
                                 case "page_close":
                                     return 0.1f;
                                 case "access":
-                                    return 0.15f;
-                                case "video":
                                     return 0.2f;
+                                case "video":
+                                    return 0.3f;
                                 case "wiki":
-                                    return 0.16f;
+                                    return 0.5f;
                                 case "problem":
-                                    return 0.34f;
+                                    return 0.8f;
                                 case "discussion":
-                                    return 0.4f;
+                                    return 1.3f;
                                 default:
                                     return -1.0f;
                             }
                 })
                 .collect(Collectors.toList());
 
-        int timeLineLength = timeLine.size();
-        int targetNum = 8000;
-        float zoomTime = ((float) targetNum) / ((float) timeLineLength);
+        int timeLength = logs.size();
+        int targetLength = 400;
 
-        for (int i = 0; i < timeLineLength; i++)
+//        for (int i = 0; i < timeLength; i++)
+//        {
+////            vectors.add(new TimeActionVector(1.0f, events.get(i)));
+//            vectors.add(events.get(i));
+//        }
+        vectors = events;
+
+        float[] offsets = new float[targetLength];
+
+        if (timeLength > targetLength)
         {
-            if (i + 1 == timeLineLength)
+            float each = (float) timeLength / (float) targetLength;
+            for (int i = 0; i < targetLength; i++)
             {
-                break;
-            }
-            else
-            {
-                e.getTimeSeriesFeatures().add(timeLine.get(i));
-
-                float gap = timeLine.get(i + 1) - timeLine.get(i);
-                float each = gap / zoomTime;
-                float increTime = gap / each;
-
-                for (float j = 1; j <= increTime - 1.0f; j = j + 1.0f)
+                int nextOne;
+                if (((int) ((i + 1) * each)) >= timeLength)
                 {
-                    e.getTimeSeriesFeatures().add(timeLine.get(i) + each * j);
+                    nextOne = timeLength - 1;
                 }
+                else
+                {
+                    nextOne = (int) ((i + 1) * each);
+                }
+
+//                float _y = vectors.subList(i * each, nextRange).stream().map(v -> v.y).reduce(0.0f, (y1, y2) -> (y1 + y2));
+                float _y = vectors.subList((int) (i * each), nextOne).stream().reduce(0.0f, (y1, y2) -> (y1 + y2));
+                offsets[i] = _y / each;
+            }
+        }
+        else if (timeLength < targetLength)
+        {
+            float each = (float) timeLength / (float) targetLength;
+            for (int i = 0; i < targetLength; i++)
+            {
+                int nextOne;
+                if (((int) (i * each)) >= timeLength)
+                {
+                    nextOne = timeLength - 1;
+                }
+                else
+                {
+                    nextOne = (int) (i * each);
+                }
+                offsets[i] = vectors.get(nextOne);
+            }
+        }
+        else if (timeLength == targetLength)
+        {
+            for (int i = 0; i < timeLength; i++)
+            {
+                offsets[i] = vectors.get(i);
             }
         }
 
+        List<Float> toOffsetD = e.getTimeSeriesFeatures();
+
+        for (int i = 0; i < targetLength; i++)
+        {
+            toOffsetD.add(offsets[i]);
+        }
     }
 }
