@@ -247,6 +247,9 @@ public class KddJavaToolChain
         ExtractFeatures.ImportEnrollmentStudentAndCourseIdtoEnrollments(train_enrollment_train_list, train_enrollments_map);
         ExtractFeatures.ImportEnrollmentStudentAndCourseIdtoEnrollments(test_enrollment_test_list, test_enrollments_map);
 
+        // Generate each student's timeline
+        ComputeStudents.ComputeTimeline();
+
         // Do Feature Extraction!
         train_enrollments_map.entrySet().parallelStream().forEach(e ->
         {

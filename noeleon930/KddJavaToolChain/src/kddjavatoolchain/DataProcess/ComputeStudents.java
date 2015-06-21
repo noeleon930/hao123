@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import kddjavatoolchain.DataFormat.Course;
+import kddjavatoolchain.DataFormat.EnrollmentLog;
 import kddjavatoolchain.DataFormat.Student;
 import kddjavatoolchain.KddJavaToolChain;
 
@@ -51,5 +53,83 @@ public class ComputeStudents
             });
             students.put(e.getKey(), new Student(e.getKey(), c));
         });
+    }
+
+    public static void ComputeTimeline()
+    {
+        ConcurrentMap<String, List<EnrollmentLog>> StudentToTrainEnrollmentMap
+                = kddjavatoolchain.KddJavaToolChain
+                .getTrain_enrollments_map()
+                .entrySet()
+                .parallelStream()
+                .map(e -> e.getValue())
+                .collect(Collectors.groupingByConcurrent(e -> e.getUsername()));
+
+        ConcurrentMap<String, List<EnrollmentLog>> StudentToTestEnrollmentMap
+                = kddjavatoolchain.KddJavaToolChain
+                .getTest_enrollments_map()
+                .entrySet()
+                .parallelStream()
+                .map(e -> e.getValue())
+                .collect(Collectors.groupingByConcurrent(e -> e.getUsername()));
+
+        ConcurrentMap<String, List<String>> StudentToDatesTrainMap
+                = StudentToTrainEnrollmentMap
+                .entrySet()
+                .parallelStream()
+                .collect(Collectors.toConcurrentMap(
+                                e -> e.getKey(),
+                                e -> e.getValue()
+                                .stream()
+                                .map(enrlg -> enrlg.getSortedLogs())
+                                .flatMap(logs -> logs.stream().map(log -> log.split(",")[1].split("T")[0]).distinct())
+                                .distinct()
+                                .collect(Collectors.toList())
+                        ));
+
+        ConcurrentMap<String, List<String>> StudentToDatesTestMap
+                = StudentToTestEnrollmentMap
+                .entrySet()
+                .parallelStream()
+                .collect(Collectors.toConcurrentMap(
+                                e -> e.getKey(),
+                                e -> e.getValue()
+                                .stream()
+                                .map(enrlg -> enrlg.getSortedLogs())
+                                .flatMap(logs -> logs.stream().map(log -> log.split(",")[1].split("T")[0]).distinct())
+                                .distinct()
+                                .collect(Collectors.toList())
+                        ));
+
+//        StudentToDatesTrainMap.entrySet().stream().sequential().forEachOrdered(e -> System.out.println(e.getKey() + " : " + e.getValue()));
+//        StudentToDatesTestMap.entrySet().stream().sequential().forEachOrdered(e -> System.out.println(e.getKey() + " : " + e.getValue()));
+//        
+        StudentToDatesTrainMap
+                .entrySet()
+                .parallelStream()
+                .forEach(e -> students.get(e.getKey()).getTimeline().addAll(e.getValue()));
+
+        StudentToDatesTestMap
+                .entrySet()
+                .parallelStream()
+                .forEach(e -> students.get(e.getKey()).getTimeline().addAll(e.getValue()));
+
+//        students.entrySet()
+//                .stream()
+//                .sequential()
+//                .map(e -> e.getValue())
+//                .forEachOrdered(stu ->
+//                        {
+//                            System.out.print(stu.getStudent_id() + " : ");
+//
+//                            stu.getTimeline()
+//                            .stream()
+//                            .sequential()
+//                            .forEachOrdered(s -> System.out.print(s + " "));
+//                });
+        students.entrySet()
+                .parallelStream()
+                .map(e -> e.getValue())
+                .forEach(stu -> stu.importToSortedTimeline());
     }
 }

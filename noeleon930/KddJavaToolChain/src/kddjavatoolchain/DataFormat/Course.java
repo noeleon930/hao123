@@ -13,7 +13,7 @@ public class Course
     private final String course_id;
     private final List<Module> modules;
     private final List<Student> students;
-    private int students_num;
+    private final int students_num;
     private int dropouts;
 
     public Course(String course_id, List<Module> modules, List<Student> students)

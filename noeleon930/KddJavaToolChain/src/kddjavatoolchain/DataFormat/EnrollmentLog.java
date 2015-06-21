@@ -34,17 +34,16 @@ public class EnrollmentLog implements Serializable
         this.TimeSeriesFeatures = new ArrayList<>();
         this.RawLogs = RawLogs;
         this.TimeLine = new ArrayList<>();
-        this.SortedLogs = GenerateSortedLogsAndTimeLine(10);
+        this.SortedLogs = GenerateSortedLogsAndTimeLine();
         this.Modules = GenerateModules();
         this.Result = -1;
     }
 
     private List<String> GenerateSortedLogsAndTimeLine()
     {
-        int listSize = this.RawLogs.size();
         return this.RawLogs
                 .stream()
-                .sorted((log1, log2) -> log2.split(",")[1].compareTo(log1.split(",")[1]))
+                .sorted((log1, log2) -> log1.split(",")[1].compareTo(log2.split(",")[1]))
                 .sequential()
                 .map((log) ->
                         {
@@ -94,12 +93,15 @@ public class EnrollmentLog implements Serializable
         // How many students in this courses dropped?
         // ComputeFeatures.CourseDropouttedStudents(this); // 1
         // Basic raw freq of each course (like how many chapters, how many videos, how many basics..)
-        ComputeFeatures.CourseObjectFeatures(this); // 15
+        // ComputeFeatures.CourseObjectFeatures(this); // 15
         // Basic raw freq of 7 log features in last login
         // The Module this enrollment actually had
-        ComputeFeatures.ModulesAccessed(this); // 15
+        ComputeFeatures.ModulesAccessed(this); // 16
         // The duration of 7 log features
         ComputeFeatures.SevenFeaturesDuration(this); // 7
+
+        // >w<
+        ComputeFeatures.StudentTimeLines(this);
     }
 
     public void GenerateTimeSeriesFeatures()
@@ -108,7 +110,7 @@ public class EnrollmentLog implements Serializable
         ComputeFeatures.Basic7x7NormMatrix(this);
         ComputeFeatures.Duration7x7Matrix(this);
         ComputeFeatures.Duration7x7NormMatrix(this);
-        ComputeFeatures.OffsetTimeSeries(this);
+//        ComputeFeatures.OffsetTimeSeries(this);
     }
 
     public int getID()

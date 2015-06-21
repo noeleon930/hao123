@@ -6,9 +6,11 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import kddjavatoolchain.DataFormat.EnrollmentLog;
 import kddjavatoolchain.DataFormat.Module;
 
@@ -112,16 +114,37 @@ public class ComputeFeatures
 
         modules_list
                 .stream()
-                .filter((m) -> (modules_map.containsKey(m.getModule_id())))
                 .sequential()
                 .map((m) ->
                         {
-                            countsMap.putIfAbsent(modules_map.get(m.getModule_id()).getCategory(), 0);
+                            String theCategory;
+
+                            if (modules_map.get(m.getModule_id()) == null)
+                            {
+                                theCategory = "unknown";
+                            }
+                            else
+                            {
+                                theCategory = modules_map.get(m.getModule_id()).getCategory();
+                            }
+
+                            countsMap.putIfAbsent(theCategory, 0);
                             return m;
                 })
                 .forEachOrdered((m) ->
                         {
-                            countsMap.computeIfPresent(modules_map.get(m.getModule_id()).getCategory(), (k, v) -> v + 1);
+                            String theCategory;
+
+                            if (modules_map.get(m.getModule_id()) == null)
+                            {
+                                theCategory = "unknown";
+                            }
+                            else
+                            {
+                                theCategory = modules_map.get(m.getModule_id()).getCategory();
+                            }
+
+                            countsMap.computeIfPresent(theCategory, (k, v) -> v + 1);
                 });
 
         e.getFeatures().add((float) countsMap.getOrDefault("about", 0));
@@ -139,6 +162,7 @@ public class ComputeFeatures
         e.getFeatures().add((float) countsMap.getOrDefault("peergrading", 0));
         e.getFeatures().add((float) countsMap.getOrDefault("discussion", 0));
         e.getFeatures().add((float) countsMap.getOrDefault("dictation", 0));
+        e.getFeatures().add((float) countsMap.getOrDefault("unknown", 0));
     }
 
     public static void SevenFeaturesDuration(EnrollmentLog e)
@@ -612,5 +636,37 @@ public class ComputeFeatures
         {
             toOffsetD.add(offsets[i]);
         }
+    }
+
+    public static void StudentTimeLines(EnrollmentLog e)
+    {
+        String student_id = e.getUsername();
+
+        Set<String> DateSet = e.getSortedLogs()
+                .stream()
+                .map(s -> s.split(",")[1].split("T")[0])
+                .distinct()
+                .collect(Collectors.toSet());
+
+        List<String> studenttimeline = ComputeStudents.students.get(student_id).getSortedtimeline();
+        Map<Integer, Boolean> DateMap = new LinkedHashMap<>();
+
+        int timelineSize = studenttimeline.size();
+        for (int i = 0; i < timelineSize; i++)
+        {
+            if (DateSet.contains(studenttimeline.get(i)))
+            {
+                DateMap.putIfAbsent(i + 1, Boolean.TRUE);
+            }
+        }
+
+        int totalScore = IntStream.rangeClosed(1, timelineSize).sum();
+        int availableScore = DateMap.entrySet()
+                .stream()
+                .mapToInt(entry -> entry.getKey())
+                .sum();
+
+        e.getFeatures().add((float) availableScore);
+        e.getFeatures().add((float) totalScore);
     }
 }
