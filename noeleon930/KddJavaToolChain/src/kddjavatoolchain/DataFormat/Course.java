@@ -1,5 +1,6 @@
 package kddjavatoolchain.DataFormat;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,9 @@ public class Course
     private final List<Student> students;
     private final int students_num;
     private int dropouts;
+
+    private Instant startTime;
+    private Instant endTime;
 
     public Course(String course_id, List<Module> modules, List<Student> students)
     {
@@ -60,5 +64,25 @@ public class Course
     public void setDropouts(int dropouts)
     {
         this.dropouts = dropouts;
+    }
+
+    public Instant getStartTime()
+    {
+        return startTime;
+    }
+
+    public void setStartTime(Instant startTime)
+    {
+        this.startTime = startTime;
+    }
+
+    public Instant getEndTime()
+    {
+        return endTime;
+    }
+
+    public void setEndTime(Instant endTime)
+    {
+        this.endTime = endTime;
     }
 }

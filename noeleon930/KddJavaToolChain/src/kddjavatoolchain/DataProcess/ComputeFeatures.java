@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import kddjavatoolchain.DataFormat.Course;
 import kddjavatoolchain.DataFormat.EnrollmentLog;
 import kddjavatoolchain.DataFormat.Module;
 
@@ -668,5 +669,29 @@ public class ComputeFeatures
 
         e.getFeatures().add((float) availableScore);
         e.getFeatures().add((float) totalScore);
+    }
+
+    public static void CourseTimeLines(EnrollmentLog e)
+    {
+//        String course_id = e.getCourse_id();
+//        Course theCourse = ComputeCourses.courses.get(course_id);
+//
+//        Instant startTime = theCourse.getStartTime();
+//        Instant endTime = theCourse.getEndTime();
+//        
+        long DateCount = e.getTimeLine()
+                .stream()
+                .map(in -> in.toString().split("T")[0])
+                .distinct()
+                .count();
+
+        long HourCount = e.getTimeLine()
+                .stream()
+                .map(in -> in.toString().split(":")[0])
+                .distinct()
+                .count();
+
+        e.getFeatures().add((float) DateCount);
+        e.getFeatures().add((float) HourCount);
     }
 }

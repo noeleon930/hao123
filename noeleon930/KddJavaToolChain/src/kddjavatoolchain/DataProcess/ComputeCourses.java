@@ -1,11 +1,15 @@
 package kddjavatoolchain.DataProcess;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import kddjavatoolchain.DataFormat.Course;
+import kddjavatoolchain.DataFormat.EnrollmentLog;
 import kddjavatoolchain.DataFormat.Module;
 import kddjavatoolchain.DataFormat.Student;
 import kddjavatoolchain.KddJavaToolChain;
@@ -64,5 +68,48 @@ public class ComputeCourses
             });
             courses.put(e.getKey(), new Course(e.getKey(), tempModuleMap.get(e.getKey()), s));
         });
+    }
+
+    public static void ComputeTimeline()
+    {
+        Map<Integer, EnrollmentLog> train_enrollments_map = kddjavatoolchain.KddJavaToolChain.getTrain_enrollments_map();
+        Map<Integer, EnrollmentLog> test_enrollments_map = kddjavatoolchain.KddJavaToolChain.getTest_enrollments_map();
+
+        Map<Integer, EnrollmentLog> total_enrollments_map = new ConcurrentHashMap<>();
+        total_enrollments_map.putAll(train_enrollments_map);
+        total_enrollments_map.putAll(test_enrollments_map);
+
+        ConcurrentMap<String, List<Instant>> CourseToInstantTrain
+                = total_enrollments_map.entrySet()
+                .parallelStream()
+                .map(e -> e.getValue())
+                .collect(Collectors.toConcurrentMap(
+                                enrlg -> enrlg.getCourse_id(),
+                                enrlg -> enrlg.getTimeLine(),
+                                (tl1, tl2) ->
+                                {
+                                    List<Instant> tmpInstants = new ArrayList<>();
+                                    tmpInstants.addAll(tl1);
+                                    tmpInstants.addAll(tl2);
+                                    return tmpInstants;
+                                }));
+
+        Map<String, Course> coursesMap = ComputeCourses.courses;
+
+        CourseToInstantTrain.entrySet()
+                .parallelStream()
+                .forEach(e ->
+                        {
+                            Instant startTime = e.getValue().stream().min((in1, in2) -> in1.compareTo(in2)).get();
+                            Instant endTime = e.getValue().stream().max((in1, in2) -> in1.compareTo(in2)).get();
+
+                            coursesMap.get(e.getKey()).setStartTime(startTime);
+                            coursesMap.get(e.getKey()).setEndTime(endTime);
+                });
+
+//        coursesMap.entrySet()
+//                .stream()
+//                .sequential()
+//                .forEachOrdered(e -> System.out.println(e.getKey() + " : " + e.getValue().getStartTime() + " -> " + e.getValue().getEndTime()));
     }
 }

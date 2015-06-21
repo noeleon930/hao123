@@ -10,7 +10,10 @@ from sklearn.cross_validation import cross_val_score
 # total 245
 # usingCols = tuple([i for i in range(245) if i not in [ii for ii in range(9, 24)]])
 # usingCols = tuple([0, 1, 2, 3, 4, 5, 6, 7, 8, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 46, 47, 48])
-usingCols = tuple([i for i in range(196)])
+d1 = [i for i in range(49)]
+d2 = [i for i in range(98, 98 + 49)]
+d1.extend(d2)
+usingCols = tuple(d1)
 
 print "using cols:"
 print usingCols
@@ -36,13 +39,12 @@ for truth_data_line in truth_data_lines:
 	truth_data.append(int(truth_data_line.replace("\n", "").split(",")[1]))
 print "Loading truth_data completed..."
 
-# for i in range(2, 30):
-i = 5
-clf_rf = ExtraTreesClassifier(n_estimators=4000, n_jobs=4, max_depth=None, min_samples_split=i, verbose=True)
-# clf_rf.fit(train_data, truth_data)
-scores = cross_val_score(clf_rf, train_data, truth_data, n_jobs=1, cv=5, verbose=True)
-print i, ":"
-print scores.mean()
+for i in [1, 5, 10, 20, 40, 60, 100, 1000, 2000, 3000, 5000]:
+# i = 5
+	clf_rf = RandomForestClassifier(n_estimators=3000, n_jobs=4, max_depth=None, min_samples_split=i, verbose=False)
+	# clf_rf.fit(train_data, truth_data)
+	scores = cross_val_score(clf_rf, train_data, truth_data, n_jobs=1, cv=2, verbose=False)
+	print i, ":", scores.mean()
 
 # predicts = clf_rf.predict_proba(test_data)
 

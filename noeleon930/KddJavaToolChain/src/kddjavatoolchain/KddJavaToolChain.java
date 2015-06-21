@@ -250,6 +250,9 @@ public class KddJavaToolChain
         // Generate each student's timeline
         ComputeStudents.ComputeTimeline();
 
+        // Generate each course's timeline
+        // ComputeCourses.ComputeTimeline();
+        // 
         // Do Feature Extraction!
         train_enrollments_map.entrySet().parallelStream().forEach(e ->
         {
