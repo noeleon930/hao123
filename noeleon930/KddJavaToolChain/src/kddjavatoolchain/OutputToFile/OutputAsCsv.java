@@ -36,7 +36,7 @@ public class OutputAsCsv
                     + ",problem_times"
                     + ",discussion_times"
                     + ",courses_student_had"
-                    + ",students_course_had"
+                    + ",students_course_drop"
                     + ",enrollment_about_num"
                     + ",enrollment_chapter_num"
                     + ",enrollment_course_num"
@@ -63,10 +63,19 @@ public class OutputAsCsv
                     + ",student_logginThisCourse_score"
                     + ",student_logginDays_score"
                     + ",activating_days"
-                    + ",activating_hours"
-                    + ",total_event_times"
-                    + ",total_enrollment_module_num"
-                    + ",total_duration_times"
+                    + ",monday"
+                    + ",tuesday"
+                    + ",wednesday"
+                    + ",thursday"
+                    + ",friday"
+                    + ",saturday"
+                    + ",sunday"
+                    + ",afterCourseStart"
+                    + ",beforeCourseEnd"
+                    + ",loggin_morning"
+                    + ",loggin_afternoon"
+                    + ",loggin_night"
+                    + ",to_special_days"
                     + "\n");
             writer.flush();
 
@@ -87,32 +96,6 @@ public class OutputAsCsv
                                     .sequential()
                                     .map(f -> String.valueOf(f))
                                     .collect(Collectors.joining(","));
-
-                                    float raw7sum
-                                    = e
-                                    .getFeatures()
-                                    .subList(0, 7)
-                                    .stream()
-                                    .collect(Collectors.summingDouble(f -> (double) f))
-                                    .floatValue();
-
-                                    float enrollment16sum
-                                    = e
-                                    .getFeatures()
-                                    .subList(9, 24)
-                                    .stream()
-                                    .collect(Collectors.summingDouble(f -> (double) f))
-                                    .floatValue();
-
-                                    float duration7sum
-                                    = e
-                                    .getFeatures()
-                                    .subList(25, 32)
-                                    .stream()
-                                    .collect(Collectors.summingDouble(f -> (double) f))
-                                    .floatValue();
-
-                                    tmpLine = tmpLine + "," + String.valueOf(raw7sum) + "," + String.valueOf(enrollment16sum) + "," + String.valueOf(duration7sum);
 
                                     writer.write(tmpLine + "\n");
                                     writer.flush();
@@ -136,7 +119,7 @@ public class OutputAsCsv
                     + ",problem_times"
                     + ",discussion_times"
                     + ",courses_student_had"
-                    + ",students_course_had"
+                    + ",students_course_drop"
                     + ",enrollment_about_num"
                     + ",enrollment_chapter_num"
                     + ",enrollment_course_num"
@@ -163,10 +146,19 @@ public class OutputAsCsv
                     + ",student_logginThisCourse_score"
                     + ",student_logginDays_score"
                     + ",activating_days"
-                    + ",activating_hours"
-                    + ",total_event_times"
-                    + ",total_enrollment_module_num"
-                    + ",total_duration_times"
+                    + ",monday"
+                    + ",tuesday"
+                    + ",wednesday"
+                    + ",thursday"
+                    + ",friday"
+                    + ",saturday"
+                    + ",sunday"
+                    + ",afterCourseStart"
+                    + ",beforeCourseEnd"
+                    + ",loggin_morning"
+                    + ",loggin_afternoon"
+                    + ",loggin_night"
+                    + ",to_special_days"
                     + "\n");
             writer.flush();
 
@@ -187,32 +179,6 @@ public class OutputAsCsv
                                     .sequential()
                                     .map(f -> String.valueOf(f))
                                     .collect(Collectors.joining(","));
-
-                                    float raw7sum
-                                    = e
-                                    .getFeatures()
-                                    .subList(0, 7)
-                                    .stream()
-                                    .collect(Collectors.summingDouble(f -> (double) f))
-                                    .floatValue();
-
-                                    float enrollment16sum
-                                    = e
-                                    .getFeatures()
-                                    .subList(9, 24)
-                                    .stream()
-                                    .collect(Collectors.summingDouble(f -> (double) f))
-                                    .floatValue();
-
-                                    float duration7sum
-                                    = e
-                                    .getFeatures()
-                                    .subList(25, 32)
-                                    .stream()
-                                    .collect(Collectors.summingDouble(f -> (double) f))
-                                    .floatValue();
-
-                                    tmpLine = tmpLine + "," + String.valueOf(raw7sum) + "," + String.valueOf(enrollment16sum) + "," + String.valueOf(duration7sum);
 
                                     writer.write(tmpLine + "\n");
                                     writer.flush();

@@ -2,7 +2,8 @@ package kddjavatoolchain.DataProcess;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,13 +59,14 @@ public class ComputeFeatures
         e.getFeatures().add((float) answer);
     }
 
-    public static void CourseHadStudents(EnrollmentLog e)
+    public static void CourseHadStudentsPercent(EnrollmentLog e)
     {
         String course_id = e.getCourse_id();
 
-        int answer = ComputeCourses.courses.get(course_id).getStudents_num();
+        int sum = ComputeCourses.courses.get(course_id).getStudents_num();
+        int dropouts = ComputeCourses.courses.get(course_id).getDropouts();
 
-        e.getFeatures().add((float) answer / 100.0f);
+        e.getFeatures().add((((float) dropouts) / ((float) sum)) * 100.f);
     }
 
     public static void CourseDropouttedStudents(EnrollmentLog e)
@@ -73,7 +75,7 @@ public class ComputeFeatures
 
         int answer = ComputeCourses.courses.get(course_id).getDropouts();
 
-        e.getFeatures().add((float) answer / 100.0f);
+        e.getFeatures().add((float) Math.log(answer));
     }
 
     public static void CourseObjectFeatures(EnrollmentLog e)
@@ -208,13 +210,13 @@ public class ComputeFeatures
             }
         }
 
-        e.getFeatures().add(durationMap.getOrDefault("nagivate", new LongAdder()).floatValue() / 100.0f);
-        e.getFeatures().add(durationMap.getOrDefault("page_close", new LongAdder()).floatValue() / 100.0f);
-        e.getFeatures().add(durationMap.getOrDefault("access", new LongAdder()).floatValue() / 100.0f);
-        e.getFeatures().add(durationMap.getOrDefault("video", new LongAdder()).floatValue() / 100.0f);
-        e.getFeatures().add(durationMap.getOrDefault("wiki", new LongAdder()).floatValue() / 100.0f);
-        e.getFeatures().add(durationMap.getOrDefault("problem", new LongAdder()).floatValue() / 100.0f);
-        e.getFeatures().add(durationMap.getOrDefault("discussion", new LongAdder()).floatValue() / 100.0f);
+        e.getFeatures().add((float) Math.log(durationMap.getOrDefault("nagivate", new LongAdder()).longValue() + 1));
+        e.getFeatures().add((float) Math.log(durationMap.getOrDefault("page_close", new LongAdder()).longValue() + 1));
+        e.getFeatures().add((float) Math.log(durationMap.getOrDefault("access", new LongAdder()).longValue() + 1));
+        e.getFeatures().add((float) Math.log(durationMap.getOrDefault("video", new LongAdder()).longValue() + 1));
+        e.getFeatures().add((float) Math.log(durationMap.getOrDefault("wiki", new LongAdder()).longValue() + 1));
+        e.getFeatures().add((float) Math.log(durationMap.getOrDefault("problem", new LongAdder()).longValue() + 1));
+        e.getFeatures().add((float) Math.log(durationMap.getOrDefault("discussion", new LongAdder()).longValue() + 1));
     }
 
     public static void Basic7x7Matrix(EnrollmentLog e)
@@ -270,375 +272,421 @@ public class ComputeFeatures
             }
         }
 
-        List<Float> to49d = e.getTimeSeriesFeatures();
+        List<Float> to49d = e.getFeatures();
 
         for (int i = 0; i < 7; i++)
         {
             for (int j = 0; j < 7; j++)
             {
-                to49d.add((float) matrix[i][j]);
+                to49d.add((float) Math.log(matrix[i][j] + 1));
             }
         }
     }
 
-    public static void Basic7x7NormMatrix(EnrollmentLog e)
-    {
-        int[][] matrix = new int[7][7];
-        for (int i = 0; i < 7; i++)
-        {
-            for (int j = 0; j < 7; j++)
-            {
-                matrix[i][j] = 0;
-            }
-        }
-
-        List<Integer> events
-                = e.getSortedLogs()
-                .stream()
-                .sequential()
-                .map(str -> str.split(",")[3])
-                .map(event ->
-                        {
-                            switch (event)
-                            {
-                                case "nagivate":
-                                    return 0;
-                                case "page_close":
-                                    return 1;
-                                case "access":
-                                    return 2;
-                                case "video":
-                                    return 3;
-                                case "wiki":
-                                    return 4;
-                                case "problem":
-                                    return 5;
-                                case "discussion":
-                                    return 6;
-                                default:
-                                    return -1;
-                            }
-                })
-                .collect(Collectors.toList());
-
-        int listSize = events.size();
-        for (int i = 0; i < listSize; i++)
-        {
-            if (i + 1 == listSize)
-            {
-                break;
-            }
-            else
-            {
-                matrix[events.get(i)][events.get(i + 1)] += 1;
-            }
-        }
-
-        List<Float> to49d = e.getTimeSeriesFeatures();
-
-        for (int i = 0; i < 7; i++)
-        {
-            float sum = (float) Arrays.stream(matrix[i])
-                    .asDoubleStream()
-                    .sum();
-
-            for (int j = 0; j < 7; j++)
-            {
-                if (sum > 0.0)
-                {
-                    to49d.add(((float) matrix[i][j]) / sum);
-                }
-                else
-                {
-                    to49d.add(1.0f / 7.0f);
-                }
-
-            }
-        }
-    }
-
-    public static void Duration7x7Matrix(EnrollmentLog e)
-    {
-        long[][] matrix = new long[7][7];
-        for (int i = 0; i < 7; i++)
-        {
-            for (int j = 0; j < 7; j++)
-            {
-                matrix[i][j] = 0;
-            }
-        }
-
-        List<Integer> events
-                = e.getSortedLogs()
-                .stream()
-                .sequential()
-                .map(str -> str.split(",")[3])
-                .map(event ->
-                        {
-                            switch (event)
-                            {
-                                case "nagivate":
-                                    return 0;
-                                case "page_close":
-                                    return 1;
-                                case "access":
-                                    return 2;
-                                case "video":
-                                    return 3;
-                                case "wiki":
-                                    return 4;
-                                case "problem":
-                                    return 5;
-                                case "discussion":
-                                    return 6;
-                                default:
-                                    return -1;
-                            }
-                })
-                .collect(Collectors.toList());
-
-        List<Instant> timeLine = e.getTimeLine();
-
-        int listSize = events.size();
-        for (int i = 0; i < listSize; i++)
-        {
-            if (i + 1 == listSize)
-            {
-                break;
-            }
-            else
-            {
-                long duration = Duration.between(timeLine.get(i), timeLine.get(i + 1)).getSeconds();
-
-                if (duration <= 0)
-                {
-                    duration = 0;
-                }
-
-                if (duration > 3600)
-                {
-                    duration = 0;
-                }
-
-                matrix[events.get(i)][events.get(i + 1)] += duration;
-            }
-        }
-
-        List<Float> to196d = e.getTimeSeriesFeatures();
-
-        for (int i = 0; i < 7; i++)
-        {
-            for (int j = 0; j < 7; j++)
-            {
-                to196d.add((float) matrix[i][j]);
-            }
-        }
-    }
-
-    public static void Duration7x7NormMatrix(EnrollmentLog e)
-    {
-        long[][] matrix = new long[7][7];
-        for (int i = 0; i < 7; i++)
-        {
-            for (int j = 0; j < 7; j++)
-            {
-                matrix[i][j] = 0;
-            }
-        }
-
-        List<Integer> events
-                = e.getSortedLogs()
-                .stream()
-                .sequential()
-                .map(str -> str.split(",")[3])
-                .map(event ->
-                        {
-                            switch (event)
-                            {
-                                case "nagivate":
-                                    return 0;
-                                case "page_close":
-                                    return 1;
-                                case "access":
-                                    return 2;
-                                case "video":
-                                    return 3;
-                                case "wiki":
-                                    return 4;
-                                case "problem":
-                                    return 5;
-                                case "discussion":
-                                    return 6;
-                                default:
-                                    return -1;
-                            }
-                })
-                .collect(Collectors.toList());
-
-        List<Instant> timeLine = e.getTimeLine();
-
-        int listSize = events.size();
-        for (int i = 0; i < listSize; i++)
-        {
-            if (i + 1 == listSize)
-            {
-                break;
-            }
-            else
-            {
-                long duration = Duration.between(timeLine.get(i), timeLine.get(i + 1)).getSeconds();
-
-                if (duration <= 0)
-                {
-                    duration = 0;
-                }
-
-                if (duration > 3600)
-                {
-                    duration = 0;
-                }
-
-                matrix[events.get(i)][events.get(i + 1)] += duration;
-            }
-        }
-
-        List<Float> to196d = e.getTimeSeriesFeatures();
-
-        for (int i = 0; i < 7; i++)
-        {
-            float sum = (float) Arrays.stream(matrix[i])
-                    .sum();
-
-            for (int j = 0; j < 7; j++)
-            {
-                if (sum > 0.0)
-                {
-                    to196d.add(((float) matrix[i][j]) / sum * 1.0f);
-                }
-                else
-                {
-                    to196d.add(1.0f / 7.0f);
-                }
-
-            }
-        }
-    }
-
-    private static class TimeActionVector
-    {
-
-        public final float x;
-        public final float y;
-
-        public TimeActionVector(float x, float y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-    }
-
-    public static void OffsetTimeSeries(EnrollmentLog e)
-    {
-        // (x, y) -> (time offset, action offset)
-        List<String> logs = e.getSortedLogs();
-//        List<TimeActionVector> vectors = new ArrayList<>();
-        List<Float> vectors;
-
-        List<Float> events
-                = logs
-                .stream()
-                .sequential()
-                .map(str -> str.split(","))
-                .map(sarr -> sarr[3])
-                .map(event ->
-                        {
-                            switch (event)
-                            {
-                                case "nagivate":
-                                    return 0.0f;
-                                case "page_close":
-                                    return 0.1f;
-                                case "access":
-                                    return 0.2f;
-                                case "video":
-                                    return 0.3f;
-                                case "wiki":
-                                    return 0.5f;
-                                case "problem":
-                                    return 0.8f;
-                                case "discussion":
-                                    return 1.3f;
-                                default:
-                                    return -1.0f;
-                            }
-                })
-                .collect(Collectors.toList());
-
-        int timeLength = logs.size();
-        int targetLength = 400;
-
-//        for (int i = 0; i < timeLength; i++)
+//    public static void Basic7x7FinalState(EnrollmentLog e)
+//    {
+//        double[][] matrix = new double[7][7];
+//        for (int i = 0; i < 7; i++)
 //        {
-////            vectors.add(new TimeActionVector(1.0f, events.get(i)));
-//            vectors.add(events.get(i));
+//            for (int j = 0; j < 7; j++)
+//            {
+//                matrix[i][j] = 0.0;
+//            }
 //        }
-        vectors = events;
-
-        float[] offsets = new float[targetLength];
-
-        if (timeLength > targetLength)
-        {
-            float each = (float) timeLength / (float) targetLength;
-            for (int i = 0; i < targetLength; i++)
-            {
-                int nextOne;
-                if (((int) ((i + 1) * each)) >= timeLength)
-                {
-                    nextOne = timeLength - 1;
-                }
-                else
-                {
-                    nextOne = (int) ((i + 1) * each);
-                }
-
-//                float _y = vectors.subList(i * each, nextRange).stream().map(v -> v.y).reduce(0.0f, (y1, y2) -> (y1 + y2));
-                float _y = vectors.subList((int) (i * each), nextOne).stream().reduce(0.0f, (y1, y2) -> (y1 + y2));
-                offsets[i] = _y / each;
-            }
-        }
-        else if (timeLength < targetLength)
-        {
-            float each = (float) timeLength / (float) targetLength;
-            for (int i = 0; i < targetLength; i++)
-            {
-                int nextOne;
-                if (((int) (i * each)) >= timeLength)
-                {
-                    nextOne = timeLength - 1;
-                }
-                else
-                {
-                    nextOne = (int) (i * each);
-                }
-                offsets[i] = vectors.get(nextOne);
-            }
-        }
-        else if (timeLength == targetLength)
-        {
-            for (int i = 0; i < timeLength; i++)
-            {
-                offsets[i] = vectors.get(i);
-            }
-        }
-
-        List<Float> toOffsetD = e.getTimeSeriesFeatures();
-
-        for (int i = 0; i < targetLength; i++)
-        {
-            toOffsetD.add(offsets[i]);
-        }
-    }
-
+//
+//        List<Integer> events
+//                = e.getSortedLogs()
+//                .stream()
+//                .sequential()
+//                .map(str -> str.split(",")[3])
+//                .map(event ->
+//                        {
+//                            switch (event)
+//                            {
+//                                case "nagivate":
+//                                    return 0;
+//                                case "page_close":
+//                                    return 1;
+//                                case "access":
+//                                    return 2;
+//                                case "video":
+//                                    return 3;
+//                                case "wiki":
+//                                    return 4;
+//                                case "problem":
+//                                    return 5;
+//                                case "discussion":
+//                                    return 6;
+//                                default:
+//                                    return -1;
+//                            }
+//                })
+//                .collect(Collectors.toList());
+//
+//        int listSize = events.size();
+//        for (int i = 0; i < listSize; i++)
+//        {
+//            if (i + 1 == listSize)
+//            {
+//                break;
+//            }
+//            else
+//            {
+//                matrix[events.get(i)][events.get(i + 1)] += 1.0;
+//            }
+//        }
+//
+////        List<Float> to49d = e.getTimeSeriesFeatures();
+//        for (int i = 0; i < 7; i++)
+//        {
+//            double sum = 0.0;
+//            for (int j = 0; j < 7; j++)
+//            {
+//                sum = sum + matrix[i][j];
+//            }
+//
+//            for (int j = 0; j < 7; j++)
+//            {
+//                double tmp = matrix[i][j] / sum;
+//
+//                if (sum <= 0.0)
+//                {
+//                    tmp = 1.0 / 7.0;
+//                }
+//
+//                matrix[i][j] = tmp;
+//            }
+//
+////            sum = 0.0;
+////            for (int j = 0; j < 7; j++)
+////            {
+////                sum = sum + matrix[i][j];
+////            }
+////
+////            Double d = sum;
+////            if (d.intValue() != 1)
+////            {
+////                System.out.println(sum);
+////            }
+//        }
+//
+//        double[] startState = new double[]
+//        {
+//            1, 0, 0, 0, 0, 0, 0
+//        };
+//
+//        double[] finalState = new double[]
+//        {
+//            0, 0, 0, 0, 0, 0, 0
+//        };
+//
+//        for (int k = 0; k < 20; k++)
+//        {
+//            for (int i = 0; i < 7; i++)
+//            {
+//                double put = 0.0;
+//
+//                for (int j = 0; j < 7; j++)
+//                {
+//                    put = put + matrix[i][j] * startState[j];
+//                }
+//
+//                finalState[i] = put;
+//            }
+//
+//            for (int i = 0; i < 7; i++)
+//            {
+//                startState[i] = finalState[i];
+//            }
+//        }
+//
+//        for (int i = 0; i < 7; i++)
+//        {
+//            e.getFeatures().add((float) finalState[i]);
+//        }
+//    }
+//
+//    public static void Duration7x7Matrix(EnrollmentLog e)
+//    {
+//        long[][] matrix = new long[7][7];
+//        for (int i = 0; i < 7; i++)
+//        {
+//            for (int j = 0; j < 7; j++)
+//            {
+//                matrix[i][j] = 0;
+//            }
+//        }
+//
+//        List<Integer> events
+//                = e.getSortedLogs()
+//                .stream()
+//                .sequential()
+//                .map(str -> str.split(",")[3])
+//                .map(event ->
+//                        {
+//                            switch (event)
+//                            {
+//                                case "nagivate":
+//                                    return 0;
+//                                case "page_close":
+//                                    return 1;
+//                                case "access":
+//                                    return 2;
+//                                case "video":
+//                                    return 3;
+//                                case "wiki":
+//                                    return 4;
+//                                case "problem":
+//                                    return 5;
+//                                case "discussion":
+//                                    return 6;
+//                                default:
+//                                    return -1;
+//                            }
+//                })
+//                .collect(Collectors.toList());
+//
+//        List<Instant> timeLine = e.getTimeLine();
+//
+//        int listSize = events.size();
+//        for (int i = 0; i < listSize; i++)
+//        {
+//            if (i + 1 == listSize)
+//            {
+//                break;
+//            }
+//            else
+//            {
+//                long duration = Duration.between(timeLine.get(i), timeLine.get(i + 1)).getSeconds();
+//
+//                if (duration <= 0)
+//                {
+//                    duration = 0;
+//                }
+//
+//                if (duration > 3600)
+//                {
+//                    duration = 0;
+//                }
+//
+//                matrix[events.get(i)][events.get(i + 1)] += duration;
+//            }
+//        }
+//
+//        List<Float> to196d = e.getTimeSeriesFeatures();
+//
+//        for (int i = 0; i < 7; i++)
+//        {
+//            for (int j = 0; j < 7; j++)
+//            {
+//                to196d.add((float) matrix[i][j]);
+//            }
+//        }
+//    }
+//
+//    public static void Duration7x7NormMatrix(EnrollmentLog e)
+//    {
+//        long[][] matrix = new long[7][7];
+//        for (int i = 0; i < 7; i++)
+//        {
+//            for (int j = 0; j < 7; j++)
+//            {
+//                matrix[i][j] = 0;
+//            }
+//        }
+//
+//        List<Integer> events
+//                = e.getSortedLogs()
+//                .stream()
+//                .sequential()
+//                .map(str -> str.split(",")[3])
+//                .map(event ->
+//                        {
+//                            switch (event)
+//                            {
+//                                case "nagivate":
+//                                    return 0;
+//                                case "page_close":
+//                                    return 1;
+//                                case "access":
+//                                    return 2;
+//                                case "video":
+//                                    return 3;
+//                                case "wiki":
+//                                    return 4;
+//                                case "problem":
+//                                    return 5;
+//                                case "discussion":
+//                                    return 6;
+//                                default:
+//                                    return -1;
+//                            }
+//                })
+//                .collect(Collectors.toList());
+//
+//        List<Instant> timeLine = e.getTimeLine();
+//
+//        int listSize = events.size();
+//        for (int i = 0; i < listSize; i++)
+//        {
+//            if (i + 1 == listSize)
+//            {
+//                break;
+//            }
+//            else
+//            {
+//                long duration = Duration.between(timeLine.get(i), timeLine.get(i + 1)).getSeconds();
+//
+//                if (duration <= 0)
+//                {
+//                    duration = 0;
+//                }
+//
+//                if (duration > 3600)
+//                {
+//                    duration = 0;
+//                }
+//
+//                matrix[events.get(i)][events.get(i + 1)] += duration;
+//            }
+//        }
+//
+//        List<Float> to196d = e.getTimeSeriesFeatures();
+//
+//        for (int i = 0; i < 7; i++)
+//        {
+//            float sum = (float) Arrays.stream(matrix[i])
+//                    .sum();
+//
+//            for (int j = 0; j < 7; j++)
+//            {
+//                if (sum > 0.0)
+//                {
+//                    to196d.add(((float) matrix[i][j]) / sum * 1.0f);
+//                }
+//                else
+//                {
+//                    to196d.add(1.0f / 7.0f);
+//                }
+//
+//            }
+//        }
+//    }
+//
+//    private static class TimeActionVector
+//    {
+//
+//        public final float x;
+//        public final float y;
+//
+//        public TimeActionVector(float x, float y)
+//        {
+//            this.x = x;
+//            this.y = y;
+//        }
+//    }
+//
+//    public static void OffsetTimeSeries(EnrollmentLog e)
+//    {
+//        // (x, y) -> (time offset, action offset)
+//        List<String> logs = e.getSortedLogs();
+////        List<TimeActionVector> vectors = new ArrayList<>();
+//        List<Float> vectors;
+//
+//        List<Float> events
+//                = logs
+//                .stream()
+//                .sequential()
+//                .map(str -> str.split(","))
+//                .map(sarr -> sarr[3])
+//                .map(event ->
+//                        {
+//                            switch (event)
+//                            {
+//                                case "nagivate":
+//                                    return 0.0f;
+//                                case "page_close":
+//                                    return 0.1f;
+//                                case "access":
+//                                    return 0.2f;
+//                                case "video":
+//                                    return 0.3f;
+//                                case "wiki":
+//                                    return 0.5f;
+//                                case "problem":
+//                                    return 0.8f;
+//                                case "discussion":
+//                                    return 1.3f;
+//                                default:
+//                                    return -1.0f;
+//                            }
+//                })
+//                .collect(Collectors.toList());
+//
+//        int timeLength = logs.size();
+//        int targetLength = 400;
+//
+////        for (int i = 0; i < timeLength; i++)
+////        {
+//////            vectors.add(new TimeActionVector(1.0f, events.get(i)));
+////            vectors.add(events.get(i));
+////        }
+//        vectors = events;
+//
+//        float[] offsets = new float[targetLength];
+//
+//        if (timeLength > targetLength)
+//        {
+//            float each = (float) timeLength / (float) targetLength;
+//            for (int i = 0; i < targetLength; i++)
+//            {
+//                int nextOne;
+//                if (((int) ((i + 1) * each)) >= timeLength)
+//                {
+//                    nextOne = timeLength - 1;
+//                }
+//                else
+//                {
+//                    nextOne = (int) ((i + 1) * each);
+//                }
+//
+////                float _y = vectors.subList(i * each, nextRange).stream().map(v -> v.y).reduce(0.0f, (y1, y2) -> (y1 + y2));
+//                float _y = vectors.subList((int) (i * each), nextOne).stream().reduce(0.0f, (y1, y2) -> (y1 + y2));
+//                offsets[i] = _y / each;
+//            }
+//        }
+//        else if (timeLength < targetLength)
+//        {
+//            float each = (float) timeLength / (float) targetLength;
+//            for (int i = 0; i < targetLength; i++)
+//            {
+//                int nextOne;
+//                if (((int) (i * each)) >= timeLength)
+//                {
+//                    nextOne = timeLength - 1;
+//                }
+//                else
+//                {
+//                    nextOne = (int) (i * each);
+//                }
+//                offsets[i] = vectors.get(nextOne);
+//            }
+//        }
+//        else if (timeLength == targetLength)
+//        {
+//            for (int i = 0; i < timeLength; i++)
+//            {
+//                offsets[i] = vectors.get(i);
+//            }
+//        }
+//
+//        List<Float> toOffsetD = e.getTimeSeriesFeatures();
+//
+//        for (int i = 0; i < targetLength; i++)
+//        {
+//            toOffsetD.add(offsets[i]);
+//        }
+//    }
     public static void StudentTimeLines(EnrollmentLog e)
     {
         String student_id = e.getUsername();
@@ -673,25 +721,139 @@ public class ComputeFeatures
 
     public static void CourseTimeLines(EnrollmentLog e)
     {
-//        String course_id = e.getCourse_id();
-//        Course theCourse = ComputeCourses.courses.get(course_id);
-//
-//        Instant startTime = theCourse.getStartTime();
-//        Instant endTime = theCourse.getEndTime();
-//        
+        String course_id = e.getCourse_id();
+        Course theCourse = ComputeCourses.courses.get(course_id);
+
+        Instant startTime = theCourse.getStartTime();
+        Instant endTime = theCourse.getEndTime();
+
         long DateCount = e.getTimeLine()
                 .stream()
                 .map(in -> in.toString().split("T")[0])
                 .distinct()
                 .count();
 
-        long HourCount = e.getTimeLine()
+//        long HourCount = e.getTimeLine()
+//                .stream()
+//                .map(in -> in.toString().split(":")[0])
+//                .distinct()
+//                .count();
+//
+        Map<String, Long> weekdaysCount = e.getTimeLine()
                 .stream()
-                .map(in -> in.toString().split(":")[0])
+                .map(in -> in.toString().split("T")[0])
                 .distinct()
-                .count();
+                .map(str -> Instant.parse(str + "T06:00:00Z"))
+                .map(in -> LocalDateTime.ofInstant(in, ZoneId.of("Z")).toLocalDate())
+                .collect(Collectors.groupingBy(date -> date.getDayOfWeek().toString(), Collectors.counting()));
 
+        Instant stuStartTime = e.getTimeLine().get(0);
+        Instant stuEndTime = e.getTimeLine().get(e.getTimeLine().size() - 1);
+        long afterCourseStart = Duration.between(startTime, stuStartTime).toDays();
+        long beforeCourseEnd = Duration.between(stuEndTime, endTime).toDays();
+//        long courseStartToStuEnd = Duration.between(startTime, stuEndTime).toDays();
+//        long stuStartToCourseEnd = Duration.between(stuStartTime, endTime).toDays();
+//
+
+        Map<String, Long> typeCount = e.getTimeLine()
+                .stream()
+                .map(in -> in.toString())
+                .map(hms -> hms.split(":")[0])
+                .distinct()
+                .map(str -> str.split("T")[1])
+                .map(h -> Integer.parseInt(h))
+                .map(h ->
+                        {
+                            if (h >= 0 && h <= 5)
+                            {
+                                return "night";
+                            }
+                            else if (h > 5 && h <= 13)
+                            {
+                                return "morning";
+                            }
+                            else if (h > 13 && h <= 21)
+                            {
+                                return "afternoon";
+                            }
+                            else
+                            {
+                                return "night";
+                            }
+                })
+                .collect(Collectors.groupingBy(type -> type, Collectors.counting()));
+
+        // Activating days
         e.getFeatures().add((float) DateCount);
-        e.getFeatures().add((float) HourCount);
+//        e.getFeatures().add((float) HourCount);
+
+        // Week days counts
+        e.getFeatures().add((float) weekdaysCount.getOrDefault("MONDAY", 0L));
+        e.getFeatures().add((float) weekdaysCount.getOrDefault("TUESDAY", 0L));
+        e.getFeatures().add((float) weekdaysCount.getOrDefault("WEDNESDAY", 0L));
+        e.getFeatures().add((float) weekdaysCount.getOrDefault("THURSDAY", 0L));
+        e.getFeatures().add((float) weekdaysCount.getOrDefault("FRIDAY", 0L));
+        e.getFeatures().add((float) weekdaysCount.getOrDefault("SATURDAY", 0L));
+        e.getFeatures().add((float) weekdaysCount.getOrDefault("SUNDAY", 0L));
+
+        // Student active in Course available days
+        e.getFeatures().add((float) afterCourseStart);
+        e.getFeatures().add((float) beforeCourseEnd);
+//        e.getFeatures().add((float) courseStartToStuEnd);
+//        e.getFeatures().add((float) stuStartToCourseEnd);
+
+        // Student active type in morning afternoon night
+        e.getFeatures().add((float) typeCount.getOrDefault("morning", 0L));
+        e.getFeatures().add((float) typeCount.getOrDefault("afternoon", 0L));
+        e.getFeatures().add((float) typeCount.getOrDefault("night", 0L));
+    }
+
+    public static void CourseTimeLinesForSpecialDays(EnrollmentLog e)
+    {
+        Instant stuEndTime = e.getTimeLine().get(e.getTimeLine().size() - 1);
+
+        Instant exam;
+
+        float answer;
+
+        int stuEndTimeYear = Integer.parseInt(stuEndTime.toString().split("T")[0].split("-")[0]);
+        int stuEndTimeMonth = Integer.parseInt(stuEndTime.toString().split("T")[0].split("-")[1]);
+
+        if (stuEndTimeMonth >= 9 && stuEndTimeMonth <= 11)
+        {
+            exam = Instant.parse(stuEndTimeYear + "-11-20T12:00:00Z");
+        }
+        else if (stuEndTimeMonth == 12)
+        {
+            exam = Instant.parse((stuEndTimeYear + 1) + "-01-20T12:00:00Z");
+        }
+        else if (stuEndTimeMonth == 1)
+        {
+            exam = Instant.parse(stuEndTimeYear + "-01-20T12:00:00Z");
+        }
+        else if (stuEndTimeMonth == 2)
+        {
+            exam = Instant.parse(stuEndTimeYear + "-02-18T12:00:00Z");
+        }
+        else if (stuEndTimeMonth > 2 && stuEndTimeMonth <= 4)
+        {
+            exam = Instant.parse(stuEndTimeYear + "-04-20T12:00:00Z");
+        }
+        else if (stuEndTimeMonth > 4 && stuEndTimeMonth <= 6)
+        {
+            exam = Instant.parse(stuEndTimeYear + "-06-20T12:00:00Z");
+        }
+        else if (stuEndTimeMonth == 7)
+        {
+            exam = Instant.parse(stuEndTimeYear + "-07-20T12:00:00Z");
+        }
+        else
+        {
+            exam = Instant.parse(stuEndTimeYear + "-08-20T12:00:00Z");
+        }
+
+        answer = (float) Math.abs(Duration.between(stuEndTime, exam).toDays());
+
+        e.getFeatures().add(answer);
     }
 }

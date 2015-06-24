@@ -66,12 +66,6 @@ public class KddJavaToolChain
      */
     public static void main(String[] args) throws IOException, ClassNotFoundException
     {
-        // 1. Read kdd_data
-        // 2. Extract features (as some kinda list of enrollments)
-        // 3. Convert to feature matrix for various platforms or tools (like java-ml or scikit-learn)
-        // 3.5. Train and Testing
-        // 4. Generate the submission
-        //
         for (String arg : args)
         {
             if (null != arg)
@@ -96,12 +90,16 @@ public class KddJavaToolChain
                     case "-surm":
                         ComputeSummarizing.GetLonggestLogLength();
                         break;
-                    case "-default":
+                    case "-serializefiles":
                         SetEnvironment();
                         LoadLogFiles();
                         LoadEnrollmentFiles();
                         LoadTruthFile();
                         LoadModulesFile();
+                        LoadEnrollmentLog();
+                        SerializeThem();
+                        break;
+                    case "-default":
                         ComputeStudents.Compute();
                         ComputeCourses.Compute();
                         ComputeEnrollments.Compute();
@@ -233,9 +231,9 @@ public class KddJavaToolChain
         p("Load Truth File Completed...");
     }
 
-    private static void ExtractFeaturesFromFiles()
+    private static void LoadEnrollmentLog()
     {
-        p("Extract Features From Files...");
+        p("Load Enrollment Log...");
 
         train_enrollments_map = ExtractFeatures.GenerateEnrollmentClass(train_log_train_list);
         test_enrollments_map = ExtractFeatures.GenerateEnrollmentClass(test_log_test_list);
@@ -247,11 +245,18 @@ public class KddJavaToolChain
         ExtractFeatures.ImportEnrollmentStudentAndCourseIdtoEnrollments(train_enrollment_train_list, train_enrollments_map);
         ExtractFeatures.ImportEnrollmentStudentAndCourseIdtoEnrollments(test_enrollment_test_list, test_enrollments_map);
 
+        p("Load Enrollment Log Completed...");
+    }
+
+    private static void ExtractFeaturesFromFiles()
+    {
+        p("Extract Features From Files...");
+
         // Generate each student's timeline
         ComputeStudents.ComputeTimeline();
 
         // Generate each course's timeline
-        // ComputeCourses.ComputeTimeline();
+        ComputeCourses.ComputeTimeline();
         // 
         // Do Feature Extraction!
         train_enrollments_map.entrySet().parallelStream().forEach(e ->
@@ -273,14 +278,49 @@ public class KddJavaToolChain
     {
         p("Serialize Them...");
 
-        try (FSTObjectOutput objOut1 = new FSTObjectOutput(new FileOutputStream("train_enrollment_map.obj")))
+        try (FSTObjectOutput objOut = new FSTObjectOutput(new FileOutputStream("train_enrollments_map.obj")))
         {
-            objOut1.writeObject(train_enrollments_map);
+            objOut.writeObject(train_enrollments_map);
         }
 
-        try (FSTObjectOutput objOut2 = new FSTObjectOutput(new FileOutputStream("test_enrollment_map.obj")))
+        try (FSTObjectOutput objOut = new FSTObjectOutput(new FileOutputStream("test_enrollments_map.obj")))
         {
-            objOut2.writeObject(test_enrollments_map);
+            objOut.writeObject(test_enrollments_map);
+        }
+
+        try (FSTObjectOutput objOut = new FSTObjectOutput(new FileOutputStream("train_log_train_list.obj")))
+        {
+            objOut.writeObject(train_log_train_list);
+        }
+
+        try (FSTObjectOutput objOut = new FSTObjectOutput(new FileOutputStream("test_log_test_list.obj")))
+        {
+            objOut.writeObject(test_log_test_list);
+        }
+
+        try (FSTObjectOutput objOut = new FSTObjectOutput(new FileOutputStream("train_enrollment_train_list.obj")))
+        {
+            objOut.writeObject(train_enrollment_train_list);
+        }
+
+        try (FSTObjectOutput objOut = new FSTObjectOutput(new FileOutputStream("test_enrollment_test_list.obj")))
+        {
+            objOut.writeObject(test_enrollment_test_list);
+        }
+
+        try (FSTObjectOutput objOut = new FSTObjectOutput(new FileOutputStream("total_enrollment_total_list.obj")))
+        {
+            objOut.writeObject(total_enrollment_total_list);
+        }
+
+        try (FSTObjectOutput objOut = new FSTObjectOutput(new FileOutputStream("train_truth_train_map.obj")))
+        {
+            objOut.writeObject(train_truth_train_map);
+        }
+
+        try (FSTObjectOutput objOut = new FSTObjectOutput(new FileOutputStream("modules_list.obj")))
+        {
+            objOut.writeObject(modules_list);
         }
 
         p("Serialize Them Completed...");
@@ -290,14 +330,49 @@ public class KddJavaToolChain
     {
         p("De-Serialize Them...");
 
-        try (FSTObjectInput objIn1 = new FSTObjectInput(new FileInputStream("train_enrollment_map.obj")))
+        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("train_enrollments_map.obj")))
         {
-            train_enrollments_map = (Map<Integer, EnrollmentLog>) objIn1.readObject();
+            train_enrollments_map = (Map<Integer, EnrollmentLog>) objIn.readObject();
         }
 
-        try (FSTObjectInput objIn2 = new FSTObjectInput(new FileInputStream("test_enrollment_map.obj")))
+        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("test_enrollments_map.obj")))
         {
-            test_enrollments_map = (Map<Integer, EnrollmentLog>) objIn2.readObject();
+            test_enrollments_map = (Map<Integer, EnrollmentLog>) objIn.readObject();
+        }
+
+        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("train_log_train_list.obj")))
+        {
+            train_log_train_list = (List<String>) objIn.readObject();
+        }
+
+        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("test_log_test_list.obj")))
+        {
+            test_log_test_list = (List<String>) objIn.readObject();
+        }
+
+        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("train_enrollment_train_list.obj")))
+        {
+            train_enrollment_train_list = (List<String>) objIn.readObject();
+        }
+
+        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("test_enrollment_test_list.obj")))
+        {
+            test_enrollment_test_list = (List<String>) objIn.readObject();
+        }
+
+        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("total_enrollment_total_list.obj")))
+        {
+            total_enrollment_total_list = (List<String>) objIn.readObject();
+        }
+
+        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("train_truth_train_map.obj")))
+        {
+            train_truth_train_map = (Map<Integer, Integer>) objIn.readObject();
+        }
+
+        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("modules_list.obj")))
+        {
+            modules_list = (Map<String, Module>) objIn.readObject();
         }
 
         p("De-Serialize Them Completed...");
@@ -413,8 +488,8 @@ public class KddJavaToolChain
         p("Output As CSV...");
 
         OutputAsCsv.RawCSV();
-        OutputAsCsv.PercentCSV();
-        OutputAsCsv.TimeseriesCSV();
+//        OutputAsCsv.PercentCSV();
+//        OutputAsCsv.TimeseriesCSV();
 //        OutputAsCsv.RawPlusTimeseriesCSV();
 
         p("Output As CSV Completed...");
@@ -432,21 +507,6 @@ public class KddJavaToolChain
         {
             p("Check 2 fail");
         }
-    }
-
-    private static void DestroyObjects()
-    {
-        p("Destroy Objects...");
-
-        train_log_train_list = null;
-        test_log_test_list = null;
-        train_enrollment_train_list = null;
-        test_enrollment_test_list = null;
-        train_enrollments_map = null;
-        test_enrollments_map = null;
-        System.gc();
-
-        p("Destroy Objects Completed...");
     }
 
     public static Map<String, Module> getModules_map()
