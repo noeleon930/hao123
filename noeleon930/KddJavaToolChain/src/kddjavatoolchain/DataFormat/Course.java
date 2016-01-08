@@ -1,7 +1,6 @@
 package kddjavatoolchain.DataFormat;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,9 +30,9 @@ public class Course
     public Course(String course_id)
     {
         this.course_id = course_id;
-        this.modules = new ArrayList<>();
-        this.students = new ArrayList<>();
-        this.students_num = students.size();
+        this.modules = null;
+        this.students = null;
+        this.students_num = 0;
     }
 
     public String getCourse_id()

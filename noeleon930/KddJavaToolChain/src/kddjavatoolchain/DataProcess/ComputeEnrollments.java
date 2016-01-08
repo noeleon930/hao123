@@ -35,7 +35,7 @@ public class ComputeEnrollments
                 .entrySet()
                 .parallelStream()
                 .map(e -> e.getValue())
-                .forEach(e -> e.setResult(truthMap.getOrDefault(e.getEnrollemt_id(), -1)));
+                .forEach(e -> e.setResult(truthMap.getOrDefault(e.getEnrollemt_id(), 0)));
 
         ComputeDropoutForStudentsAndCourses();
     }

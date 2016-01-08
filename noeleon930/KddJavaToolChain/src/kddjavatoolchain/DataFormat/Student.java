@@ -14,6 +14,7 @@ public class Student
 
     private final String student_id;
     private final List<Course> courses;
+    private final Set<Integer> coursesID;
     private final Set<String> timeline;
     private final List<String> sortedtimeline;
     private final int courses_num;
@@ -23,6 +24,7 @@ public class Student
     {
         this.student_id = student_id;
         this.courses = courses;
+        this.coursesID = new ConcurrentSkipListSet<>();
         this.timeline = new ConcurrentSkipListSet<>();
         this.sortedtimeline = new ArrayList<>();
         this.courses_num = courses.size();
@@ -31,10 +33,11 @@ public class Student
     public Student(String student_id)
     {
         this.student_id = student_id;
-        this.courses = new ArrayList<>();
-        this.timeline = new ConcurrentSkipListSet<>();
-        this.sortedtimeline = new ArrayList<>();
-        this.courses_num = courses.size();
+        this.courses = null;
+        this.coursesID = null;
+        this.timeline = null;
+        this.sortedtimeline = null;
+        this.courses_num = 0;
     }
 
     public String getStudent_id()
@@ -82,5 +85,10 @@ public class Student
     public List<String> getSortedtimeline()
     {
         return sortedtimeline;
+    }
+
+    public Set<Integer> getCoursesID()
+    {
+        return coursesID;
     }
 }

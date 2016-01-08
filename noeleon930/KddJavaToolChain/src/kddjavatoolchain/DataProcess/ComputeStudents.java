@@ -1,9 +1,10 @@
 package kddjavatoolchain.DataProcess;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import kddjavatoolchain.DataFormat.Course;
@@ -19,6 +20,7 @@ public class ComputeStudents
 {
 
     public static Map<String, Student> students;
+    public static ConcurrentMap<String, Set<EnrollmentLog>> studentsToEnrollmentLogMap;
 
     private static class tempStudentRow
     {
@@ -42,7 +44,7 @@ public class ComputeStudents
                 .map(sarr -> new tempStudentRow(sarr[1], sarr[2]))
                 .collect(Collectors.groupingByConcurrent(tsr -> tsr.student_id));
 
-        students = new LinkedHashMap<>();
+        students = new ConcurrentHashMap<>();
 
         tempMap.entrySet().stream().forEach((e) ->
         {
@@ -53,6 +55,34 @@ public class ComputeStudents
             });
             students.put(e.getKey(), new Student(e.getKey(), c));
         });
+
+        studentsToEnrollmentLogMap
+                = KddJavaToolChain.getTrain_enrollments_map()
+                .entrySet()
+                .parallelStream()
+                .map(e -> e.getValue())
+                .collect(Collectors.groupingByConcurrent(enrlg -> enrlg.getUsername(), Collectors.toSet()));
+
+        ConcurrentMap<String, Set<EnrollmentLog>> tmp
+                = KddJavaToolChain.getTest_enrollments_map()
+                .entrySet()
+                .parallelStream()
+                .map(e -> e.getValue())
+                .collect(Collectors.groupingByConcurrent(enrlg -> enrlg.getUsername(), Collectors.toSet()));
+
+        tmp.entrySet()
+                .stream()
+                .forEach(e ->
+                        {
+                            if (studentsToEnrollmentLogMap.containsKey(e.getKey()))
+                            {
+                                studentsToEnrollmentLogMap.get(e.getKey()).addAll(e.getValue());
+                            }
+                            else
+                            {
+                                studentsToEnrollmentLogMap.put(e.getKey(), e.getValue());
+                            }
+                });
     }
 
     public static void ComputeTimeline()

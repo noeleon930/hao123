@@ -10,7 +10,7 @@ import kddjavatoolchain.DataFormat.EnrollmentLog;
  *
  * @author Noel
  */
-public class ExtractFeatures
+public class GenerateEnrollmentLogs
 {
 
     public static Map<Integer, EnrollmentLog> GenerateEnrollmentClass(List<String> inputList)

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import kddjavatoolchain.DataFormat.EnrollmentLog;
@@ -21,7 +22,7 @@ import kddjavatoolchain.DataProcess.ComputeCourses;
 import kddjavatoolchain.DataProcess.ComputeEnrollments;
 import kddjavatoolchain.DataProcess.ComputeStudents;
 import kddjavatoolchain.DataProcess.ComputeSummarizing;
-import kddjavatoolchain.DataProcess.ExtractFeatures;
+import kddjavatoolchain.DataProcess.GenerateEnrollmentLogs;
 import kddjavatoolchain.OutputToFile.OutputAsCsv;
 import org.nustaq.serialization.FSTObjectInput;
 import org.nustaq.serialization.FSTObjectOutput;
@@ -39,6 +40,7 @@ public class KddJavaToolChain
     private static Path train_enrollment_train_path;
     private static Path test_log_test_path;
     private static Path test_enrollment_test_path;
+    private static Path course_date_course_path;
 
     private static List<String> train_log_train_list;
     private static List<String> test_log_test_list;
@@ -53,6 +55,8 @@ public class KddJavaToolChain
     private static Map<Integer, EnrollmentLog> test_enrollments_map;
 
     private static Map<String, Module> modules_list;
+
+    private static ConcurrentMap<String, String> course_date_course_map;
 
     private static void p(String in)
     {
@@ -88,7 +92,7 @@ public class KddJavaToolChain
                         CheckData();
                         break;
                     case "-surm":
-                        ComputeSummarizing.GetLonggestLogLength();
+                        ComputeSummarizing.Compute();
                         break;
                     case "-serializefiles":
                         SetEnvironment();
@@ -97,16 +101,12 @@ public class KddJavaToolChain
                         LoadTruthFile();
                         LoadModulesFile();
                         LoadEnrollmentLog();
+                        LoadCourseDate();
                         SerializeThem();
                         break;
                     case "-default":
-                        ComputeStudents.Compute();
-                        ComputeCourses.Compute();
-                        ComputeEnrollments.Compute();
                         ExtractFeaturesFromFiles();
                         OutputAsCSV();
-//                        SerializeThem();
-//                        DestroyObjects();
                         break;
                 }
             }
@@ -235,40 +235,62 @@ public class KddJavaToolChain
     {
         p("Load Enrollment Log...");
 
-        train_enrollments_map = ExtractFeatures.GenerateEnrollmentClass(train_log_train_list);
-        test_enrollments_map = ExtractFeatures.GenerateEnrollmentClass(test_log_test_list);
+        train_enrollments_map = GenerateEnrollmentLogs.GenerateEnrollmentClass(train_log_train_list);
+        test_enrollments_map = GenerateEnrollmentLogs.GenerateEnrollmentClass(test_log_test_list);
 
         // Import truth to enrollments
-        ExtractFeatures.ImportTruthToEnrollments(train_truth_train_map, train_enrollments_map);
+        GenerateEnrollmentLogs.ImportTruthToEnrollments(train_truth_train_map, train_enrollments_map);
 
         // Import students and course data to train and test
-        ExtractFeatures.ImportEnrollmentStudentAndCourseIdtoEnrollments(train_enrollment_train_list, train_enrollments_map);
-        ExtractFeatures.ImportEnrollmentStudentAndCourseIdtoEnrollments(test_enrollment_test_list, test_enrollments_map);
+        GenerateEnrollmentLogs.ImportEnrollmentStudentAndCourseIdtoEnrollments(train_enrollment_train_list, train_enrollments_map);
+        GenerateEnrollmentLogs.ImportEnrollmentStudentAndCourseIdtoEnrollments(test_enrollment_test_list, test_enrollments_map);
 
         p("Load Enrollment Log Completed...");
+    }
+
+    private static void LoadCourseDate() throws IOException
+    {
+        course_date_course_path
+                = kdd_data_home_path.resolve("date.csv");
+
+        course_date_course_map
+                = Files.lines(course_date_course_path, StandardCharsets.UTF_8)
+                .skip(1)
+                .sequential()
+                .map(str -> str.split(","))
+                .collect(Collectors.toConcurrentMap(sarr -> sarr[0], sarr -> sarr[1] + "," + sarr[2]));
     }
 
     private static void ExtractFeaturesFromFiles()
     {
         p("Extract Features From Files...");
 
-        // Generate each student's timeline
+        p("-> Computing Students...");
+        ComputeStudents.Compute();
+
+        p("-> Computing Courses...");
+        ComputeCourses.Compute();
+
+        p("-> Computing Enrollments...");
+        ComputeEnrollments.Compute();
+
+        p("-> Computing Students' Timeline...");
         ComputeStudents.ComputeTimeline();
 
-        // Generate each course's timeline
+        p("-> Computing Courses' Timeline...");
         ComputeCourses.ComputeTimeline();
-        // 
-        // Do Feature Extraction!
+
+        p("-> Feature Extraction for Train Data...");
         train_enrollments_map.entrySet().parallelStream().forEach(e ->
         {
             e.getValue().GenerateFeatures();
-            e.getValue().GenerateTimeSeriesFeatures();
+            // e.getValue().GenerateTimeSeriesFeatures();
         });
-
+        p("-> Feature Extraction for Test Data...");
         test_enrollments_map.entrySet().parallelStream().forEach(e ->
         {
             e.getValue().GenerateFeatures();
-            e.getValue().GenerateTimeSeriesFeatures();
+            // e.getValue().GenerateTimeSeriesFeatures();
         });
 
         p("Extract Features From Files Completed...");
@@ -323,6 +345,11 @@ public class KddJavaToolChain
             objOut.writeObject(modules_list);
         }
 
+        try (FSTObjectOutput objOut = new FSTObjectOutput(new FileOutputStream("course_date_course_map.obj")))
+        {
+            objOut.writeObject(course_date_course_map);
+        }
+
         p("Serialize Them Completed...");
     }
 
@@ -340,26 +367,6 @@ public class KddJavaToolChain
             test_enrollments_map = (Map<Integer, EnrollmentLog>) objIn.readObject();
         }
 
-        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("train_log_train_list.obj")))
-        {
-            train_log_train_list = (List<String>) objIn.readObject();
-        }
-
-        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("test_log_test_list.obj")))
-        {
-            test_log_test_list = (List<String>) objIn.readObject();
-        }
-
-        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("train_enrollment_train_list.obj")))
-        {
-            train_enrollment_train_list = (List<String>) objIn.readObject();
-        }
-
-        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("test_enrollment_test_list.obj")))
-        {
-            test_enrollment_test_list = (List<String>) objIn.readObject();
-        }
-
         try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("total_enrollment_total_list.obj")))
         {
             total_enrollment_total_list = (List<String>) objIn.readObject();
@@ -373,6 +380,11 @@ public class KddJavaToolChain
         try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("modules_list.obj")))
         {
             modules_list = (Map<String, Module>) objIn.readObject();
+        }
+
+        try (FSTObjectInput objIn = new FSTObjectInput(new FileInputStream("course_date_course_map.obj")))
+        {
+            course_date_course_map = (ConcurrentMap<String, String>) objIn.readObject();
         }
 
         p("De-Serialize Them Completed...");
@@ -488,9 +500,7 @@ public class KddJavaToolChain
         p("Output As CSV...");
 
         OutputAsCsv.RawCSV();
-//        OutputAsCsv.PercentCSV();
-//        OutputAsCsv.TimeseriesCSV();
-//        OutputAsCsv.RawPlusTimeseriesCSV();
+        OutputAsCsv.Timeline30CSV();
 
         p("Output As CSV Completed...");
     }
@@ -539,6 +549,11 @@ public class KddJavaToolChain
     public static Map<Integer, EnrollmentLog> getTest_enrollments_map()
     {
         return test_enrollments_map;
+    }
+
+    public static ConcurrentMap<String, String> getCourse_date_course_map()
+    {
+        return course_date_course_map;
     }
 
 }

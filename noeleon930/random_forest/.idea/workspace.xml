@@ -2,12 +2,21 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9fd185a0-4730-4728-9c68-02f619e4b18b" name="Default" comment="">
+      <change type="DELETED" beforePath="W:\hao123\noeleon930\KddJavaToolChain\manifest.mf" afterPath="" />
+      <change type="DELETED" beforePath="W:\hao123\noeleon930\random_forest\knn.py" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/ComputeCourses.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/ComputeCourses.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/ComputeEnrollments.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/ComputeEnrollments.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/ComputeFeatures.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/ComputeFeatures.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/ComputeStudents.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/ComputeStudents.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/ComputeSummarizing.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/ComputeSummarizing.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataFormat/Course.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataFormat/Course.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataFormat/EnrollmentLog.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataFormat/EnrollmentLog.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/KddJavaToolChain.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/KddJavaToolChain.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataFormat/Module.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataFormat/Module.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/OutputToFile/OutputAsCsv.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/OutputToFile/OutputAsCsv.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataFormat/Student.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataFormat/Student.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/random_forest.py" afterPath="$PROJECT_DIR$/random_forest.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MOVED" beforePath="W:\hao123\noeleon930\KddJavaToolChain\src\kddjavatoolchain\DataProcess\ExtractFeatures.java" afterPath="$PROJECT_DIR$/../KddJavaToolChain/src/kddjavatoolchain/DataProcess/GenerateEnrollmentLogs.java" />
     </list>
     <ignored path="random_forest.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -79,6 +88,8 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -89,8 +100,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">

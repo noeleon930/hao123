@@ -22,9 +22,9 @@ public class Module implements Serializable
 
     public Module(String module_id)
     {
-        this.course_id = "";
+        this.course_id = null;
         this.module_id = module_id;
-        this.category = "";
+        this.category = null;
     }
 
     public String getCourse_id()
